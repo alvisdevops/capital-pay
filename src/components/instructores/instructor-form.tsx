@@ -156,7 +156,7 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
           </div>
 
           <div className="border-t pt-4">
-            <h3 className="mb-3 text-sm font-medium text-gray-700">Datos Bancarios</h3>
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">Datos Bancarios</h3>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="banco">Banco</Label>

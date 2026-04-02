@@ -38,13 +38,13 @@ export default async function InstructorCuentasPage() {
 
       {cuentas.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
-          <p className="text-gray-500">No tienes cuentas de cobro aún.</p>
+          <p className="text-muted-foreground">No tienes cuentas de cobro aún.</p>
           <Link href="/instructor/cuentas/nueva">
             <Button className="mt-4">Crear tu primera cuenta</Button>
           </Link>
         </div>
       ) : (
-        <div className="rounded-lg border bg-white">
+        <div className="rounded-lg border bg-card">
           <Table>
             <TableHeader>
               <TableRow>

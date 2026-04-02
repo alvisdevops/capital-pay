@@ -11,6 +11,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 interface NavItem {
   label: string;
@@ -29,10 +30,10 @@ export function Sidebar({ items, userName, userRole }: SidebarProps) {
 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-      <div className="flex flex-1 flex-col border-r bg-white">
+      <div className="flex flex-1 flex-col border-r bg-card">
         <div className="flex h-16 items-center border-b px-6">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
               CP
             </div>
             <span className="text-lg font-semibold">CapitalPay</span>
@@ -48,8 +49,8 @@ export function Sidebar({ items, userName, userRole }: SidebarProps) {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
               >
                 <item.icon className="h-5 w-5" />
@@ -59,13 +60,16 @@ export function Sidebar({ items, userName, userRole }: SidebarProps) {
           })}
         </nav>
         <div className="border-t p-4">
-          <div className="mb-3 px-3">
-            <p className="text-sm font-medium text-gray-900">{userName}</p>
-            <p className="text-xs text-gray-500">{userRole}</p>
+          <div className="mb-3 flex items-center justify-between px-3">
+            <div>
+              <p className="text-sm font-medium">{userName}</p>
+              <p className="text-xs text-muted-foreground">{userRole}</p>
+            </div>
+            <ThemeToggle />
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             <LogOut className="h-5 w-5" />
             Cerrar sesión

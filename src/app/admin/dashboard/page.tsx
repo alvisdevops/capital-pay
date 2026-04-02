@@ -29,7 +29,7 @@ export default async function AdminDashboard() {
   ]);
 
   const stats = [
-    { label: "Total Cuentas", value: totalCuentas, icon: FileText, color: "text-gray-600" },
+    { label: "Total Cuentas", value: totalCuentas, icon: FileText, color: "text-muted-foreground" },
     { label: "Pendientes", value: pendientes, icon: Clock, color: "text-yellow-600" },
     { label: "Aprobadas", value: aprobadas, icon: CheckCircle, color: "text-blue-600" },
     { label: "Rechazadas", value: rechazadas, icon: AlertCircle, color: "text-red-600" },
@@ -53,7 +53,7 @@ export default async function AdminDashboard() {
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-500">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.label}
               </CardTitle>
               <stat.icon className={`h-5 w-5 ${stat.color}`} />

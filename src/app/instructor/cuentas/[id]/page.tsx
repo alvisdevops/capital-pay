@@ -63,20 +63,20 @@ export default async function CuentaDetailPage({ params }: Props) {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Estado</span>
+              <span className="text-sm text-muted-foreground">Estado</span>
               <CuentaStatusBadge estado={cuenta.estado} />
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Sede</span>
+              <span className="text-sm text-muted-foreground">Sede</span>
               <span className="text-sm font-medium">{cuenta.sede.nombre}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Concepto</span>
+              <span className="text-sm text-muted-foreground">Concepto</span>
               <span className="text-sm font-medium max-w-[200px] text-right">{cuenta.concepto}</span>
             </div>
             {cuenta.descripcion && (
               <div>
-                <span className="text-sm text-gray-500">Descripción</span>
+                <span className="text-sm text-muted-foreground">Descripción</span>
                 <p className="mt-1 text-sm">{cuenta.descripcion}</p>
               </div>
             )}
@@ -89,24 +89,24 @@ export default async function CuentaDetailPage({ params }: Props) {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Valor</span>
+              <span className="text-sm text-muted-foreground">Valor</span>
               <span className="text-lg font-bold text-green-700">
                 {formatCurrency(Number(cuenta.valor))}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Periodo</span>
+              <span className="text-sm text-muted-foreground">Periodo</span>
               <span className="text-sm font-medium">
                 {formatDate(cuenta.periodoInicio)} - {formatDate(cuenta.periodoFin)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Fecha de creación</span>
+              <span className="text-sm text-muted-foreground">Fecha de creación</span>
               <span className="text-sm">{formatDate(cuenta.createdAt)}</span>
             </div>
             {cuenta.fechaPago && (
               <div className="flex justify-between">
-                <span className="text-sm text-gray-500">Fecha de pago</span>
+                <span className="text-sm text-muted-foreground">Fecha de pago</span>
                 <span className="text-sm font-medium text-green-700">
                   {formatDate(cuenta.fechaPago)}
                 </span>

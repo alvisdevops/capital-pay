@@ -71,9 +71,9 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
       />
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 rounded-lg border bg-white p-4">
+      <div className="flex flex-wrap gap-3 rounded-lg border bg-card p-4">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-500">Estado</label>
+          <label className="text-xs font-medium text-muted-foreground">Estado</label>
           <div className="flex gap-1">
             {estados.map((estado) => (
               <Link
@@ -102,10 +102,10 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
 
       {cuentas.length === 0 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
-          <p className="text-gray-500">No se encontraron cuentas de cobro.</p>
+          <p className="text-muted-foreground">No se encontraron cuentas de cobro.</p>
         </div>
       ) : (
-        <div className="rounded-lg border bg-white">
+        <div className="rounded-lg border bg-card">
           <Table>
             <TableHeader>
               <TableRow>

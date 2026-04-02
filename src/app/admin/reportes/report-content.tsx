@@ -62,7 +62,7 @@ export function ReportContent() {
   }
 
   if (loading && !data) {
-    return <p className="text-gray-500">Cargando reportes...</p>;
+    return <p className="text-muted-foreground">Cargando reportes...</p>;
   }
 
   if (!data) return null;
@@ -70,7 +70,7 @@ export function ReportContent() {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-white p-4">
+      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-4">
         <div className="space-y-1">
           <Label className="text-xs">Desde</Label>
           <Input
@@ -101,7 +101,7 @@ export function ReportContent() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Total Cuentas</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">Total Cuentas</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{data.totalGeneral.cantidad}</p>
@@ -109,7 +109,7 @@ export function ReportContent() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Valor Total</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">Valor Total</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{formatCurrency(data.totalGeneral.total)}</p>
