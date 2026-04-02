@@ -1,0 +1,126 @@
+import { requireRole } from "@/lib/auth-guard";
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/shared/page-header";
+import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Download, Pencil, Trash2 } from "lucide-react";
+import { DeleteCuentaButton } from "./delete-button";
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function CuentaDetailPage({ params }: Props) {
+  const session = await requireRole("INSTRUCTOR");
+  const { id } = await params;
+
+  const cuenta = await prisma.cuentaCobro.findUnique({
+    where: { id },
+    include: { sede: true, instructor: true },
+  });
+
+  if (!cuenta || cuenta.instructorId !== session.user.id) {
+    notFound();
+  }
+
+  const isPendiente = cuenta.estado === "PENDIENTE";
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={`Cuenta de Cobro #${String(cuenta.numero).padStart(5, "0")}`}
+        action={
+          <div className="flex gap-2">
+            <a href={`/api/pdf/${cuenta.id}`} target="_blank">
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Descargar PDF
+              </Button>
+            </a>
+            {isPendiente && (
+              <>
+                <Link href={`/instructor/cuentas/${cuenta.id}/editar`}>
+                  <Button variant="outline">
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                </Link>
+                <DeleteCuentaButton cuentaId={cuenta.id} />
+              </>
+            )}
+          </div>
+        }
+      />
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Información General</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Estado</span>
+              <CuentaStatusBadge estado={cuenta.estado} />
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Sede</span>
+              <span className="text-sm font-medium">{cuenta.sede.nombre}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Concepto</span>
+              <span className="text-sm font-medium max-w-[200px] text-right">{cuenta.concepto}</span>
+            </div>
+            {cuenta.descripcion && (
+              <div>
+                <span className="text-sm text-gray-500">Descripción</span>
+                <p className="mt-1 text-sm">{cuenta.descripcion}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Datos de Pago</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Valor</span>
+              <span className="text-lg font-bold text-green-700">
+                {formatCurrency(Number(cuenta.valor))}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Periodo</span>
+              <span className="text-sm font-medium">
+                {formatDate(cuenta.periodoInicio)} - {formatDate(cuenta.periodoFin)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Fecha de creación</span>
+              <span className="text-sm">{formatDate(cuenta.createdAt)}</span>
+            </div>
+            {cuenta.fechaPago && (
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500">Fecha de pago</span>
+                <span className="text-sm font-medium text-green-700">
+                  {formatDate(cuenta.fechaPago)}
+                </span>
+              </div>
+            )}
+            {cuenta.observaciones && (
+              <div className="rounded-md bg-yellow-50 p-3">
+                <span className="text-sm font-medium text-yellow-800">Observaciones:</span>
+                <p className="mt-1 text-sm text-yellow-700">{cuenta.observaciones}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

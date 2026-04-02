@@ -1,0 +1,69 @@
+import { requireRole } from "@/lib/auth-guard";
+import { prisma } from "@/lib/prisma";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/shared/page-header";
+import { formatCurrency } from "@/lib/utils";
+import { FileText, Clock, CheckCircle, DollarSign, Users, AlertCircle } from "lucide-react";
+
+export default async function AdminDashboard() {
+  const session = await requireRole("ADMIN");
+
+  const [
+    totalCuentas,
+    pendientes,
+    aprobadas,
+    rechazadas,
+    totalPagado,
+    totalInstructores,
+  ] = await Promise.all([
+    prisma.cuentaCobro.count(),
+    prisma.cuentaCobro.count({ where: { estado: "PENDIENTE" } }),
+    prisma.cuentaCobro.count({ where: { estado: "APROBADA" } }),
+    prisma.cuentaCobro.count({ where: { estado: "RECHAZADA" } }),
+    prisma.cuentaCobro.aggregate({
+      where: { estado: "PAGADA" },
+      _sum: { valor: true },
+      _count: true,
+    }),
+    prisma.user.count({ where: { role: "INSTRUCTOR" } }),
+  ]);
+
+  const stats = [
+    { label: "Total Cuentas", value: totalCuentas, icon: FileText, color: "text-gray-600" },
+    { label: "Pendientes", value: pendientes, icon: Clock, color: "text-yellow-600" },
+    { label: "Aprobadas", value: aprobadas, icon: CheckCircle, color: "text-blue-600" },
+    { label: "Rechazadas", value: rechazadas, icon: AlertCircle, color: "text-red-600" },
+    {
+      label: "Total Pagado",
+      value: formatCurrency(Number(totalPagado._sum.valor || 0)),
+      icon: DollarSign,
+      color: "text-green-600",
+    },
+    { label: "Instructores", value: totalInstructores, icon: Users, color: "text-purple-600" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={`Panel de Administración`}
+        description="Resumen general de Capital Cars"
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map((stat) => (
+          <Card key={stat.label}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">
+                {stat.label}
+              </CardTitle>
+              <stat.icon className={`h-5 w-5 ${stat.color}`} />
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{stat.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}

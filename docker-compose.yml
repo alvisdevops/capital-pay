@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: capitalpay-db
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-capitalpay}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-capitalpay123}
+      - POSTGRES_DB=${POSTGRES_DB:-capitalpay}
+    volumes:
+      - ${DATA_PATH:-./data}/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - capitalpay-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-capitalpay} -d ${POSTGRES_DB:-capitalpay}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: capitalpay-app
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-capitalpay}:${POSTGRES_PASSWORD:-capitalpay123}@db:5432/${POSTGRES_DB:-capitalpay}?schema=public
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-in-production}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@capitalcars.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin123*}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - capitalpay-network
+
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    container_name: capitalpay-migrator
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-capitalpay}:${POSTGRES_PASSWORD:-capitalpay123}@db:5432/${POSTGRES_DB:-capitalpay}?schema=public
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@capitalcars.com}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin123*}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - capitalpay-network
+    profiles:
+      - tools
+
+networks:
+  capitalpay-network:
+    driver: bridge
+    name: capitalpay-network

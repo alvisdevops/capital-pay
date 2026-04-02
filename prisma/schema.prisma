@@ -1,15 +1,83 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+}
+
+enum EstadoCuenta {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  PAGADA
+}
+
+enum TipoCuenta {
+  AHORROS
+  CORRIENTE
+}
+
+model User {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  password         String
+  nombre           String
+  apellido         String
+  cedula           String        @unique
+  telefono         String?
+  direccion        String?
+  ciudadExpedicion  String?
+  role             Role          @default(INSTRUCTOR)
+  activo           Boolean       @default(true)
+  banco            String?
+  tipoCuenta       TipoCuenta?
+  numeroCuenta     String?
+  sede             Sede?         @relation(fields: [sedeId], references: [id])
+  sedeId           String?
+  cuentasCobro     CuentaCobro[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@map("users")
+}
+
+model Sede {
+  id           String        @id @default(cuid())
+  nombre       String
+  direccion    String
+  activa       Boolean       @default(true)
+  usuarios     User[]
+  cuentasCobro CuentaCobro[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("sedes")
+}
+
+model CuentaCobro {
+  id             String       @id @default(cuid())
+  numero         Int          @unique @default(autoincrement())
+  instructor     User         @relation(fields: [instructorId], references: [id])
+  instructorId   String
+  sede           Sede         @relation(fields: [sedeId], references: [id])
+  sedeId         String
+  concepto       String
+  descripcion    String?
+  valor          Decimal      @db.Decimal(12, 2)
+  periodoInicio  DateTime
+  periodoFin     DateTime
+  estado         EstadoCuenta @default(PENDIENTE)
+  observaciones  String?
+  fechaPago      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("cuentas_cobro")
 }
