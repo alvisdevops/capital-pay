@@ -7,7 +7,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5437:5432"
 
   app:
     build:
@@ -22,12 +22,12 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://${POSTGRES_USER:-capitalpay}:${POSTGRES_PASSWORD:-capitalpay123}@db:5432/${POSTGRES_DB:-capitalpay}?schema=public
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-in-production}
-      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_URL=http://localhost:3008
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@capitalcars.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-Admin123*}
       - WATCHPACK_POLLING=true
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${APP_PORT:-3008}:3000"
     entrypoint: []
     command: sh -c "npm install && npx prisma generate && npx prisma migrate deploy && npx prisma db seed && npm run dev"
 
