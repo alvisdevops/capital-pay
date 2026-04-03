@@ -38,9 +38,6 @@ export default async function EditarInstructorPage({ params }: Props) {
             telefono: instructor.telefono,
             direccion: instructor.direccion,
             ciudadExpedicion: instructor.ciudadExpedicion,
-            banco: instructor.banco,
-            tipoCuenta: instructor.tipoCuenta,
-            numeroCuenta: instructor.numeroCuenta,
             sedeId: instructor.sedeId,
           }}
         />

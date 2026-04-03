@@ -113,3 +113,30 @@ export async function toggleInstructorActivo(instructorId: string) {
   revalidatePath("/admin/instructores");
   return { success: true, activo: !instructor.activo };
 }
+
+export async function resetPasswordInstructor(instructorId: string, nuevaPassword: string) {
+  await requireRole("ADMIN");
+
+  if (!nuevaPassword || nuevaPassword.length < 8) {
+    return { error: "La contraseña debe tener al menos 8 caracteres" };
+  }
+
+  const instructor = await prisma.user.findUnique({
+    where: { id: instructorId },
+  });
+
+  if (!instructor) return { error: "Instructor no encontrado" };
+
+  const hashedPassword = await hash(nuevaPassword, 12);
+
+  await prisma.user.update({
+    where: { id: instructorId },
+    data: {
+      password: hashedPassword,
+      setupCompleto: false,
+    },
+  });
+
+  revalidatePath("/admin/instructores");
+  return { success: true };
+}

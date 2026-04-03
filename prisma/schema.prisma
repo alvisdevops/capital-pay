@@ -37,6 +37,7 @@ model User {
   foto             String?
   role             Role          @default(INSTRUCTOR)
   activo           Boolean       @default(true)
+  setupCompleto    Boolean       @default(false)
   banco            String?
   tipoCuenta       TipoCuenta?
   numeroCuenta     String?

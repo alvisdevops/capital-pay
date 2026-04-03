@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { crearInstructor, actualizarInstructor } from "@/actions/instructores";
-import { BANCOS_COLOMBIA } from "@/lib/constants";
 
 interface Sede {
   id: string;
@@ -32,9 +31,6 @@ interface InstructorFormProps {
     telefono: string | null;
     direccion: string | null;
     ciudadExpedicion: string | null;
-    banco: string | null;
-    tipoCuenta: string | null;
-    numeroCuenta: string | null;
     sedeId: string | null;
   };
 }
@@ -59,9 +55,6 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
       telefono: (formData.get("telefono") as string) || undefined,
       direccion: (formData.get("direccion") as string) || undefined,
       ciudadExpedicion: (formData.get("ciudadExpedicion") as string) || undefined,
-      banco: (formData.get("banco") as string) || undefined,
-      tipoCuenta: (formData.get("tipoCuenta") as string) || undefined,
-      numeroCuenta: (formData.get("numeroCuenta") as string) || undefined,
       sedeId: formData.get("sedeId"),
     };
 
@@ -108,11 +101,11 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="cedula">Cédula</Label>
+              <Label htmlFor="cedula">Cedula</Label>
               <Input id="cedula" name="cedula" defaultValue={defaultValues?.cedula} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ciudadExpedicion">Ciudad expedición</Label>
+              <Label htmlFor="ciudadExpedicion">Ciudad expedicion</Label>
               <Input id="ciudadExpedicion" name="ciudadExpedicion" defaultValue={defaultValues?.ciudadExpedicion || ""} />
             </div>
           </div>
@@ -124,7 +117,7 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">
-                {isEditing ? "Nueva contraseña (dejar vacío para no cambiar)" : "Contraseña"}
+                {isEditing ? "Nueva contrasena (dejar vacio para no cambiar)" : "Contrasena temporal"}
               </Label>
               <Input id="password" name="password" type="password" required={!isEditing} minLength={8} />
             </div>
@@ -132,11 +125,11 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="telefono">Teléfono</Label>
+              <Label htmlFor="telefono">Telefono</Label>
               <Input id="telefono" name="telefono" defaultValue={defaultValues?.telefono || ""} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="direccion">Dirección</Label>
+              <Label htmlFor="direccion">Direccion</Label>
               <Input id="direccion" name="direccion" defaultValue={defaultValues?.direccion || ""} />
             </div>
           </div>
@@ -153,41 +146,6 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="border-t pt-4">
-            <h3 className="mb-3 text-sm font-medium text-muted-foreground">Datos Bancarios</h3>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="banco">Banco</Label>
-                <Select name="banco" defaultValue={defaultValues?.banco || undefined}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BANCOS_COLOMBIA.map((banco) => (
-                      <SelectItem key={banco} value={banco}>{banco}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tipoCuenta">Tipo de cuenta</Label>
-                <Select name="tipoCuenta" defaultValue={defaultValues?.tipoCuenta || undefined}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AHORROS">Ahorros</SelectItem>
-                    <SelectItem value="CORRIENTE">Corriente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="numeroCuenta">Número de cuenta</Label>
-                <Input id="numeroCuenta" name="numeroCuenta" defaultValue={defaultValues?.numeroCuenta || ""} />
-              </div>
-            </div>
           </div>
 
           <div className="flex gap-3 pt-4">

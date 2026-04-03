@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { ToggleActivoButton } from "@/components/instructores/toggle-activo-button";
+import { ResetPasswordDialog } from "@/components/instructores/reset-password-dialog";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,10 @@ export default async function AdminInstructoresPage() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                       </Link>
+                      <ResetPasswordDialog
+                        instructorId={instructor.id}
+                        instructorNombre={`${instructor.nombre} ${instructor.apellido}`}
+                      />
                       <ToggleActivoButton
                         instructorId={instructor.id}
                         activo={instructor.activo}

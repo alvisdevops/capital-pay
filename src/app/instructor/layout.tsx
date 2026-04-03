@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 import { InstructorLayoutClient } from "./layout-client";
 
 export default async function InstructorLayout({
@@ -11,8 +12,12 @@ export default async function InstructorLayout({
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { foto: true },
+    select: { foto: true, setupCompleto: true },
   });
+
+  if (!user?.setupCompleto) {
+    redirect("/setup");
+  }
 
   return (
     <InstructorLayoutClient
