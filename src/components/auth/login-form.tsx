@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LogoIcon } from "@/components/shared/logo";
 
 export function LoginForm() {
   const router = useRouter();
@@ -40,9 +41,17 @@ export function LoginForm() {
 
   return (
     <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">CapitalPay</CardTitle>
-        <CardDescription>Capital Cars - Sistema de Cuentas de Cobro</CardDescription>
+      <CardHeader className="text-center space-y-3">
+        <div className="flex justify-center">
+          <LogoIcon size="lg" />
+        </div>
+        <div>
+          <CardTitle className="text-2xl font-bold">
+            <span style={{ color: "#E5A800" }}>Capital</span>
+            <span style={{ color: "#C41E1E" }}>Pay</span>
+          </CardTitle>
+          <CardDescription>Centro de Enseñanza Automovilística</CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

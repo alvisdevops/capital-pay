@@ -1,9 +1,8 @@
 import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shared/page-header";
 import { formatCurrency } from "@/lib/utils";
-import { FileText, Clock, CheckCircle, DollarSign, Users, AlertCircle } from "lucide-react";
+import { FileText, Clock, CheckCircle, DollarSign, Users, CircleX } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboard() {
@@ -30,18 +29,15 @@ export default async function AdminDashboard() {
   ]);
 
   const stats = [
-    { label: "Total Cuentas", value: totalCuentas, icon: FileText, color: "text-muted-foreground", href: "/admin/cuentas" },
-    { label: "Pendientes", value: pendientes, icon: Clock, color: "text-yellow-600", href: "/admin/cuentas?estado=PENDIENTE" },
-    { label: "Aprobadas", value: aprobadas, icon: CheckCircle, color: "text-blue-600", href: "/admin/cuentas?estado=APROBADA" },
-    { label: "Rechazadas", value: rechazadas, icon: AlertCircle, color: "text-red-600", href: "/admin/cuentas?estado=RECHAZADA" },
+    { label: "Total Cuentas", sub: "cuentas", value: totalCuentas, icon: FileText, iconColor: "#1E88E5", iconBg: "#1E3A5F20", barColor: "#1E88E5", href: "/admin/cuentas" },
+    { label: "Pendientes", sub: "pendientes", value: pendientes, icon: Clock, iconColor: "#FF9800", iconBg: "#5F3A1E20", barColor: "#FF9800", href: "/admin/cuentas?estado=PENDIENTE" },
+    { label: "Aprobadas", sub: "aprobadas", value: aprobadas, icon: CheckCircle, iconColor: "#43A047", iconBg: "#1E5F2A20", barColor: "#43A047", href: "/admin/cuentas?estado=APROBADA" },
+    { label: "Rechazadas", sub: "rechazadas", value: rechazadas, icon: CircleX, iconColor: "#E53935", iconBg: "#5F1E1E20", barColor: "#E53935", href: "/admin/cuentas?estado=RECHAZADA" },
     {
-      label: "Total Pagado",
-      value: formatCurrency(Number(totalPagado._sum.valor || 0)),
-      icon: DollarSign,
-      color: "text-green-600",
-      href: "/admin/cuentas?estado=PAGADA",
+      label: "Total Pagado", sub: "pagados", value: formatCurrency(Number(totalPagado._sum.valor || 0)),
+      icon: DollarSign, iconColor: "#7C4DFF", iconBg: "#3A1E5F20", barColor: "#7C4DFF", href: "/admin/cuentas?estado=PAGADA",
     },
-    { label: "Instructores", value: totalInstructores, icon: Users, color: "text-purple-600", href: "/admin/instructores" },
+    { label: "Instructores", sub: "activos", value: totalInstructores, icon: Users, iconColor: "#00BCD4", iconBg: "#1E4F5F20", barColor: "#00BCD4", href: "/admin/instructores" },
   ];
 
   return (
@@ -54,17 +50,25 @@ export default async function AdminDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <Link key={stat.label} href={stat.href}>
-            <Card className="hover:border-primary/50 transition-colors cursor-pointer">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.label}
-                </CardTitle>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{stat.value}</p>
-              </CardContent>
-            </Card>
+            <div className="rounded-xl border bg-card p-5 hover:border-primary/50 transition-colors cursor-pointer flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-muted-foreground">{stat.label}</span>
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-[10px]"
+                  style={{ backgroundColor: stat.iconBg }}
+                >
+                  <stat.icon className="h-[18px] w-[18px]" style={{ color: stat.iconColor }} />
+                </div>
+              </div>
+              <div className="flex items-end gap-2">
+                <p className="text-4xl font-bold leading-none">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.sub}</p>
+              </div>
+              <div
+                className="h-[3px] w-full rounded-sm"
+                style={{ backgroundColor: stat.barColor, opacity: 0.3 }}
+              />
+            </div>
           </Link>
         ))}
       </div>

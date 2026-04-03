@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { LogoIcon } from "@/components/shared/logo";
 
 interface NavItem {
   label: string;
@@ -35,10 +36,11 @@ export function Header({ items, userName }: HeaderProps) {
           <SheetContent side="left" className="w-64 p-0">
             <div className="flex h-16 items-center border-b px-6">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-                  CP
+                <LogoIcon size="sm" />
+                <div className="flex items-baseline gap-0.5">
+                  <span className="text-lg font-bold" style={{ color: "#E5A800" }}>Capital</span>
+                  <span className="text-lg font-extrabold" style={{ color: "#C41E1E" }}>Pay</span>
                 </div>
-                <span className="text-lg font-semibold">CapitalPay</span>
               </div>
             </div>
             <nav className="space-y-1 px-3 py-4">
@@ -74,7 +76,10 @@ export function Header({ items, userName }: HeaderProps) {
             </div>
           </SheetContent>
         </Sheet>
-        <span className="ml-3 text-lg font-semibold">CapitalPay</span>
+        <div className="ml-3 flex items-baseline gap-0.5">
+          <span className="text-lg font-bold" style={{ color: "#E5A800" }}>Capital</span>
+          <span className="text-lg font-extrabold" style={{ color: "#C41E1E" }}>Pay</span>
+        </div>
       </div>
       <ThemeToggle />
     </header>

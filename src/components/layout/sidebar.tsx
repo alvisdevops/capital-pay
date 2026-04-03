@@ -14,6 +14,7 @@ import {
 import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 
+
 interface NavItem {
   label: string;
   href: string;
@@ -33,12 +34,10 @@ export function Sidebar({ items, userName, userRole, userPhoto }: SidebarProps) 
   return (
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
       <div className="flex flex-1 flex-col border-r bg-card">
-        <div className="flex h-16 items-center border-b px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-              CP
-            </div>
-            <span className="text-lg font-semibold">CapitalPay</span>
+        <div className="flex h-16 items-center justify-center border-b px-6">
+          <Link href="/" className="flex items-baseline gap-0.5">
+            <span className="text-xl font-bold" style={{ color: "#E5A800" }}>Capital</span>
+            <span className="text-xl font-extrabold" style={{ color: "#C41E1E" }}>Pay</span>
           </Link>
         </div>
         <nav className="flex-1 space-y-1 px-3 py-4">
