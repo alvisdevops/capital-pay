@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
 import { StatusChangeDialog } from "@/components/cuentas/status-change-dialog";
 import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
+import { SearchInput } from "@/components/cuentas/search-input";
 import { formatCurrency, formatDateShort } from "@/lib/utils";
 import { type EstadoCuenta } from "@prisma/client";
 import Link from "next/link";
@@ -16,13 +17,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Download } from "lucide-react";
+import { Eye, Download, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface Props {
   searchParams: Promise<{
     estado?: string;
     instructor?: string;
     sede?: string;
+    q?: string;
   }>;
 }
 
@@ -39,6 +42,14 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
   }
   if (params.sede) {
     where.sedeId = params.sede;
+  }
+  if (params.q) {
+    where.instructor = {
+      OR: [
+        { nombre: { contains: params.q, mode: "insensitive" } },
+        { apellido: { contains: params.q, mode: "insensitive" } },
+      ],
+    };
   }
 
   const [cuentas, instructores, sedes] = await Promise.all([
@@ -72,7 +83,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
       />
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 rounded-lg border bg-card p-4">
+      <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-end">
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Estado</label>
           <div className="flex gap-1">
@@ -99,6 +110,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
             ))}
           </div>
         </div>
+        <SearchInput basePath="/admin/cuentas" />
       </div>
 
       {cuentas.length === 0 ? (
@@ -106,69 +118,92 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
           <p className="text-muted-foreground">No se encontraron cuentas de cobro.</p>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>No.</TableHead>
-                <TableHead>Instructor</TableHead>
-                <TableHead>Concepto</TableHead>
-                <TableHead>Sede</TableHead>
-                <TableHead>Periodo</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cuentas.map((cuenta) => (
-                <TableRow key={cuenta.id}>
-                  <TableCell className="font-medium">
-                    {String(cuenta.numero).padStart(5, "0")}
-                  </TableCell>
-                  <TableCell>
-                    {cuenta.instructor.nombre} {cuenta.instructor.apellido}
-                  </TableCell>
-                  <TableCell className="max-w-[150px] truncate">
-                    {cuenta.concepto}
-                  </TableCell>
-                  <TableCell>{cuenta.sede.nombre}</TableCell>
-                  <TableCell className="text-sm">
-                    {formatDateShort(cuenta.periodoInicio)} -{" "}
-                    {formatDateShort(cuenta.periodoFin)}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(Number(cuenta.valor))}
-                  </TableCell>
-                  <TableCell>
+        <>
+          {/* Mobile Cards */}
+          <div className="md:hidden divide-y divide-border rounded-lg border bg-card">
+            {cuentas.map((cuenta) => (
+              <Link key={cuenta.id} href={`/admin/cuentas/${cuenta.id}`} className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-muted-foreground">#{String(cuenta.numero).padStart(5, "0")}</span>
                     <CuentaStatusBadge estado={cuenta.estado} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Link href={`/admin/cuentas/${cuenta.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <PdfPreviewDialog
-                        cuentaId={cuenta.id}
-                        cuentaNumero={String(cuenta.numero).padStart(5, "0")}
-                      >
-                        <Button variant="ghost" size="icon">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </PdfPreviewDialog>
-                      <StatusChangeDialog
-                        cuentaId={cuenta.id}
-                        estadoActual={cuenta.estado}
-                      />
-                    </div>
-                  </TableCell>
+                  </div>
+                  <p className="font-medium truncate">{cuenta.instructor.nombre} {cuenta.instructor.apellido}</p>
+                  <p className="text-sm text-muted-foreground truncate">{cuenta.concepto}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs text-muted-foreground">{cuenta.sede.nombre}</span>
+                    <span className="font-medium">{formatCurrency(Number(cuenta.valor))}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block rounded-lg border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>No.</TableHead>
+                  <TableHead>Instructor</TableHead>
+                  <TableHead>Concepto</TableHead>
+                  <TableHead className="hidden lg:table-cell">Sede</TableHead>
+                  <TableHead className="hidden lg:table-cell">Periodo</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {cuentas.map((cuenta) => (
+                  <TableRow key={cuenta.id}>
+                    <TableCell className="font-medium">
+                      {String(cuenta.numero).padStart(5, "0")}
+                    </TableCell>
+                    <TableCell>
+                      {cuenta.instructor.nombre} {cuenta.instructor.apellido}
+                    </TableCell>
+                    <TableCell className="max-w-[150px] truncate">
+                      {cuenta.concepto}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">{cuenta.sede.nombre}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm">
+                      {formatDateShort(cuenta.periodoInicio)} -{" "}
+                      {formatDateShort(cuenta.periodoFin)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(Number(cuenta.valor))}
+                    </TableCell>
+                    <TableCell>
+                      <CuentaStatusBadge estado={cuenta.estado} />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Link href={`/admin/cuentas/${cuenta.id}`}>
+                          <Button variant="ghost" size="icon">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <PdfPreviewDialog
+                          cuentaId={cuenta.id}
+                          cuentaNumero={String(cuenta.numero).padStart(5, "0")}
+                        >
+                          <Button variant="ghost" size="icon">
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </PdfPreviewDialog>
+                        <StatusChangeDialog
+                          cuentaId={cuenta.id}
+                          estadoActual={cuenta.estado}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
     </div>
   );

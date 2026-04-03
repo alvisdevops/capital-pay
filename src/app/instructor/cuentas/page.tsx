@@ -44,14 +44,35 @@ export default async function InstructorCuentasPage() {
           </Link>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card">
+        <>
+          {/* Mobile Cards */}
+          <div className="md:hidden divide-y divide-border rounded-lg border bg-card">
+            {cuentas.map((cuenta) => (
+              <Link key={cuenta.id} href={`/instructor/cuentas/${cuenta.id}`} className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-muted-foreground">#{String(cuenta.numero).padStart(5, "0")}</span>
+                    <CuentaStatusBadge estado={cuenta.estado} />
+                  </div>
+                  <p className="font-medium truncate">{cuenta.concepto}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs text-muted-foreground">{cuenta.sede.nombre}</span>
+                    <span className="font-medium">{formatCurrency(Number(cuenta.valor))}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block rounded-lg border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>No.</TableHead>
                 <TableHead>Concepto</TableHead>
-                <TableHead>Sede</TableHead>
-                <TableHead>Periodo</TableHead>
+                <TableHead className="hidden lg:table-cell">Sede</TableHead>
+                <TableHead className="hidden lg:table-cell">Periodo</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead></TableHead>
@@ -66,8 +87,8 @@ export default async function InstructorCuentasPage() {
                   <TableCell className="max-w-[200px] truncate">
                     {cuenta.concepto}
                   </TableCell>
-                  <TableCell>{cuenta.sede.nombre}</TableCell>
-                  <TableCell className="text-sm">
+                  <TableCell className="hidden lg:table-cell">{cuenta.sede.nombre}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-sm">
                     {formatDateShort(cuenta.periodoInicio)} -{" "}
                     {formatDateShort(cuenta.periodoFin)}
                   </TableCell>
@@ -88,7 +109,8 @@ export default async function InstructorCuentasPage() {
               ))}
             </TableBody>
           </Table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

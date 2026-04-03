@@ -22,14 +22,15 @@ export default async function InstructorDashboard() {
   ]);
 
   const stats = [
-    { label: "Total Cuentas", value: total, icon: FileText, color: "text-muted-foreground" },
-    { label: "Pendientes", value: pendientes, icon: Clock, color: "text-yellow-600" },
-    { label: "Aprobadas", value: aprobadas, icon: CheckCircle, color: "text-blue-600" },
+    { label: "Total Cuentas", value: total, icon: FileText, color: "text-muted-foreground", href: "/instructor/cuentas" },
+    { label: "Pendientes", value: pendientes, icon: Clock, color: "text-yellow-600", href: "/instructor/cuentas" },
+    { label: "Aprobadas", value: aprobadas, icon: CheckCircle, color: "text-blue-600", href: "/instructor/cuentas" },
     {
       label: "Total Pagado",
       value: formatCurrency(Number(pagadas._sum.valor || 0)),
       icon: DollarSign,
       color: "text-green-600",
+      href: "/instructor/cuentas",
     },
   ];
 
@@ -47,17 +48,19 @@ export default async function InstructorDashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{stat.value}</p>
-            </CardContent>
-          </Card>
+          <Link key={stat.label} href={stat.href}>
+            <Card className="hover:border-primary/50 transition-colors cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {stat.label}
+                </CardTitle>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold">{stat.value}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>
