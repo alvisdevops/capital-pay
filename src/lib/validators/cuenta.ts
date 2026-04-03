@@ -16,6 +16,16 @@ export const cuentaCobroSchema = z.object({
     message: "La fecha de fin debe ser igual o posterior a la fecha de inicio",
     path: ["periodoFin"],
   }
+).refine(
+  (data) => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    return new Date(data.periodoInicio) <= today && new Date(data.periodoFin) <= today;
+  },
+  {
+    message: "Las fechas no pueden ser posteriores al día de hoy",
+    path: ["periodoFin"],
+  }
 );
 
 export type CuentaCobroInput = z.infer<typeof cuentaCobroSchema>;

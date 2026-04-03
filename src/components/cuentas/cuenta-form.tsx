@@ -39,6 +39,7 @@ export function CuentaForm({ sedes, defaultValues }: CuentaFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const isEditing = !!defaultValues;
+  const today = new Date().toISOString().split("T")[0];
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -143,6 +144,7 @@ export function CuentaForm({ sedes, defaultValues }: CuentaFormProps) {
                 id="periodoInicio"
                 name="periodoInicio"
                 type="date"
+                max={today}
                 defaultValue={defaultValues?.periodoInicio}
                 required
               />
@@ -153,6 +155,7 @@ export function CuentaForm({ sedes, defaultValues }: CuentaFormProps) {
                 id="periodoFin"
                 name="periodoFin"
                 type="date"
+                max={today}
                 defaultValue={defaultValues?.periodoFin}
                 required
               />

@@ -9,6 +9,7 @@ import {
   Users,
   BarChart3,
   LogOut,
+  Settings,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -23,9 +24,10 @@ interface SidebarProps {
   items: NavItem[];
   userName: string;
   userRole: string;
+  userPhoto?: string | null;
 }
 
-export function Sidebar({ items, userName, userRole }: SidebarProps) {
+export function Sidebar({ items, userName, userRole, userPhoto }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -60,13 +62,29 @@ export function Sidebar({ items, userName, userRole }: SidebarProps) {
           })}
         </nav>
         <div className="border-t p-4">
-          <div className="mb-3 flex items-center justify-between px-3">
-            <div>
-              <p className="text-sm font-medium">{userName}</p>
+          <div className="mb-3 flex items-center gap-3 px-3">
+            <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+              {userPhoto ? (
+                <img src={userPhoto} alt={userName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-sm font-semibold text-muted-foreground">
+                  {userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{userName}</p>
               <p className="text-xs text-muted-foreground">{userRole}</p>
             </div>
             <ThemeToggle />
           </div>
+          <Link
+            href={pathname.startsWith("/admin") ? "/admin/settings" : "/instructor/settings"}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            <Settings className="h-5 w-5" />
+            Configuración
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"

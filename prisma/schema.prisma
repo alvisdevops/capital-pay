@@ -34,6 +34,7 @@ model User {
   telefono         String?
   direccion        String?
   ciudadExpedicion  String?
+  foto             String?
   role             Role          @default(INSTRUCTOR)
   activo           Boolean       @default(true)
   banco            String?
