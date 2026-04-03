@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download } from "lucide-react";
 
 interface PdfPreviewDialogProps {
   cuentaId: string;
@@ -27,14 +25,8 @@ export function PdfPreviewDialog({ cuentaId, cuentaNumero, children }: PdfPrevie
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-3xl h-[85vh] flex flex-col">
-          <DialogHeader className="flex flex-row items-center justify-between">
+          <DialogHeader>
             <DialogTitle>Cuenta de Cobro #{cuentaNumero}</DialogTitle>
-            <a href={pdfUrl} download={`cuenta-cobro-${cuentaNumero}.pdf`}>
-              <Button size="sm" variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Descargar
-              </Button>
-            </a>
           </DialogHeader>
           <div className="flex-1 min-h-0">
             <iframe

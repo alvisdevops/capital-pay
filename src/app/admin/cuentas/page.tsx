@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
 import { StatusChangeDialog } from "@/components/cuentas/status-change-dialog";
-import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
 import { formatCurrency, formatDateShort } from "@/lib/utils";
 import { type EstadoCuenta } from "@prisma/client";
 import Link from "next/link";
@@ -150,14 +149,11 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <PdfPreviewDialog
-                        cuentaId={cuenta.id}
-                        cuentaNumero={String(cuenta.numero).padStart(5, "0")}
-                      >
+                      <a href={`/api/pdf/${cuenta.id}`} download>
                         <Button variant="ghost" size="icon">
                           <Download className="h-4 w-4" />
                         </Button>
-                      </PdfPreviewDialog>
+                      </a>
                       <StatusChangeDialog
                         cuentaId={cuenta.id}
                         estadoActual={cuenta.estado}
