@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${inter.className} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full bg-background">
+      <body className="min-h-full bg-background" suppressHydrationWarning>
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

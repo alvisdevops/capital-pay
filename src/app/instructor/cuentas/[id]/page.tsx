@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
+import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,12 +36,15 @@ export default async function CuentaDetailPage({ params }: Props) {
         title={`Cuenta de Cobro #${String(cuenta.numero).padStart(5, "0")}`}
         action={
           <div className="flex gap-2">
-            <a href={`/api/pdf/${cuenta.id}`} target="_blank">
+            <PdfPreviewDialog
+              cuentaId={cuenta.id}
+              cuentaNumero={String(cuenta.numero).padStart(5, "0")}
+            >
               <Button variant="outline">
                 <Download className="mr-2 h-4 w-4" />
-                Descargar PDF
+                Ver PDF
               </Button>
-            </a>
+            </PdfPreviewDialog>
             {isPendiente && (
               <>
                 <Link href={`/instructor/cuentas/${cuenta.id}/editar`}>

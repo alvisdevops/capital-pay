@@ -20,6 +20,8 @@ jobs:
             sudo mkdir -p /var/lib/capitalpay
             sudo chown -R $USER:$USER /var/lib/capitalpay
           fi
+          sudo mkdir -p /var/lib/capitalpay/uploads
+          sudo chown 1001:1001 /var/lib/capitalpay/uploads
           echo "✅ Data directories verified"
 
       - name: Remove development override file
