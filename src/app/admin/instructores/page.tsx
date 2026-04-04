@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
+import { Pagination } from "@/components/shared/pagination";
 import { ToggleActivoButton } from "@/components/instructores/toggle-activo-button";
 import { ResetPasswordDialog } from "@/components/instructores/reset-password-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -16,23 +17,38 @@ import {
 } from "@/components/ui/table";
 import { Pencil, Plus } from "lucide-react";
 
-export default async function AdminInstructoresPage() {
-  await requireRole("ADMIN");
+const PAGE_SIZE = 10;
 
-  const instructores = await prisma.user.findMany({
-    where: { role: "INSTRUCTOR" },
-    include: {
-      sede: { select: { nombre: true } },
-      _count: { select: { cuentasCobro: true } },
-    },
-    orderBy: { nombre: "asc" },
-  });
+interface Props {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function AdminInstructoresPage({ searchParams }: Props) {
+  await requireRole("ADMIN");
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page || "1"));
+
+  const [instructores, total] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: "INSTRUCTOR" },
+      include: {
+        sede: { select: { nombre: true } },
+        _count: { select: { cuentasCobro: true } },
+      },
+      orderBy: { nombre: "asc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.user.count({ where: { role: "INSTRUCTOR" } }),
+  ]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Instructores"
-        description={`${instructores.length} instructor(es) registrado(s)`}
+        description={`${total} instructor(es) registrado(s)`}
         action={
           <Link href="/admin/instructores/nuevo">
             <Button>
@@ -137,6 +153,7 @@ export default async function AdminInstructoresPage() {
                         <ToggleActivoButton
                           instructorId={instructor.id}
                           activo={instructor.activo}
+                          instructorNombre={`${instructor.nombre} ${instructor.apellido}`}
                         />
                       </div>
                     </TableCell>
@@ -145,6 +162,13 @@ export default async function AdminInstructoresPage() {
               </TableBody>
             </Table>
           </div>
+
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            basePath="/admin/instructores"
+            searchParams={params}
+          />
         </>
       )}
     </div>

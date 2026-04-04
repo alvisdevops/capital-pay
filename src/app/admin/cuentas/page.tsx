@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
+import { Pagination } from "@/components/shared/pagination";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
 import { StatusChangeDialog } from "@/components/cuentas/status-change-dialog";
 import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
@@ -17,8 +18,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, Download, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Eye, Download } from "lucide-react";
+
+const PAGE_SIZE = 10;
 
 interface Props {
   searchParams: Promise<{
@@ -26,12 +28,14 @@ interface Props {
     instructor?: string;
     sede?: string;
     q?: string;
+    page?: string;
   }>;
 }
 
 export default async function AdminCuentasPage({ searchParams }: Props) {
   await requireRole("ADMIN");
   const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page || "1"));
 
   const where: Record<string, unknown> = {};
   if (params.estado && params.estado !== "TODOS") {
@@ -52,7 +56,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
     };
   }
 
-  const [cuentas, instructores, sedes] = await Promise.all([
+  const [cuentas, total] = await Promise.all([
     prisma.cuentaCobro.findMany({
       where,
       include: {
@@ -60,33 +64,27 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
         sede: { select: { nombre: true } },
       },
       orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     }),
-    prisma.user.findMany({
-      where: { role: "INSTRUCTOR" },
-      select: { id: true, nombre: true, apellido: true },
-      orderBy: { nombre: "asc" },
-    }),
-    prisma.sede.findMany({
-      where: { activa: true },
-      select: { id: true, nombre: true },
-      orderBy: { nombre: "asc" },
-    }),
+    prisma.cuentaCobro.count({ where }),
   ]);
 
+  const totalPages = Math.ceil(total / PAGE_SIZE);
   const estados = ["TODOS", "PENDIENTE", "APROBADA", "RECHAZADA", "PAGADA"];
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Cuentas de Cobro"
-        description={`${cuentas.length} cuenta(s)`}
+        description={`${total} cuenta(s)`}
       />
 
       {/* Filters */}
       <div className="flex flex-col gap-3 rounded-lg border bg-card p-4 sm:flex-row sm:items-end">
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Estado</label>
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap">
             {estados.map((estado) => (
               <Link
                 key={estado}
@@ -95,6 +93,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
                   query: {
                     ...params,
                     estado: estado === "TODOS" ? undefined : estado,
+                    page: undefined,
                   },
                 }}
               >
@@ -203,6 +202,13 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
               </TableBody>
             </Table>
           </div>
+
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            basePath="/admin/cuentas"
+            searchParams={params}
+          />
         </>
       )}
     </div>
