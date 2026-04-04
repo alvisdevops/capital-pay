@@ -20,7 +20,7 @@ export function PdfPreviewDialog({ cuentaId, cuentaNumero, children }: PdfPrevie
 
   return (
     <>
-      <div onClick={() => setOpen(true)}>
+      <div onClick={() => setOpen(true)} className="cursor-pointer">
         {children}
       </div>
       <Dialog open={open} onOpenChange={setOpen}>
