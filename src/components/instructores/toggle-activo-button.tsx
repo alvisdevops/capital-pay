@@ -25,12 +25,16 @@ export function ToggleActivoButton({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleToggle() {
     setLoading(true);
+    setError("");
     const result = await toggleInstructorActivo(instructorId);
     if (result.error) {
-      alert(result.error);
+      setError(result.error);
+      setLoading(false);
+      return;
     }
     setLoading(false);
     setOpen(false);
@@ -58,6 +62,7 @@ export function ToggleActivoButton({
                 : `${instructorNombre || "Este instructor"} podra volver a iniciar sesion y enviar cuentas de cobro.`}
             </DialogDescription>
           </DialogHeader>
+          {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancelar

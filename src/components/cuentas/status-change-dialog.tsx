@@ -27,6 +27,7 @@ export function StatusChangeDialog({ cuentaId, estadoActual }: StatusChangeDialo
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [selectedEstado, setSelectedEstado] = useState<string>("");
   const [observaciones, setObservaciones] = useState("");
 
@@ -45,7 +46,7 @@ export function StatusChangeDialog({ cuentaId, estadoActual }: StatusChangeDialo
     });
 
     if (result.error) {
-      alert(result.error);
+      setError(result.error);
       setLoading(false);
       return;
     }
@@ -66,6 +67,7 @@ export function StatusChangeDialog({ cuentaId, estadoActual }: StatusChangeDialo
             Estado actual: {ESTADOS_CUENTA[estadoActual].label}
           </DialogDescription>
         </DialogHeader>
+        {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Nuevo estado</Label>

@@ -19,12 +19,14 @@ export function DeleteCuentaButton({ cuentaId }: { cuentaId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleDelete() {
     setLoading(true);
+    setError("");
     const result = await eliminarCuenta(cuentaId);
     if (result.error) {
-      alert(result.error);
+      setError(result.error);
       setLoading(false);
       return;
     }
@@ -45,6 +47,7 @@ export function DeleteCuentaButton({ cuentaId }: { cuentaId: string }) {
             Esta acción no se puede deshacer. La cuenta de cobro será eliminada permanentemente.
           </DialogDescription>
         </DialogHeader>
+        {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancelar
