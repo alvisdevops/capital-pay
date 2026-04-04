@@ -41,6 +41,12 @@ services:
     restart: unless-stopped
     networks:
       - capitalpay-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   migrator:
     build:
