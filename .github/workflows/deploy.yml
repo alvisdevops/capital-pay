@@ -103,14 +103,14 @@ jobs:
         run: |
           echo "🌱 Checking if seed is needed..."
           ADMIN_COUNT=$(docker compose --profile tools run --rm migrator node -e "
-            const { PrismaClient } = require('@prisma/client');
-            const p = new PrismaClient();
-            p.user.count({ where: { role: 'ADMIN' } }).then(c => { console.log(c); p.\$disconnect(); });
-          " 2>/dev/null || echo "0")
+            (async()=>{const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();const c=await p.user.count({where:{role:'ADMIN'}});console.log(c);await p.\$disconnect()})()
+          " 2>/dev/null | tail -1 || echo "0")
 
-          if [ "$ADMIN_COUNT" == "0" ]; then
+          echo "Admin count: $ADMIN_COUNT"
+
+          if [ "$ADMIN_COUNT" = "0" ]; then
             echo "🌱 First deploy - running seed..."
             docker compose --profile tools run --rm migrator npx prisma db seed || true
           else
-            echo "✅ Database already seeded"
+            echo "✅ Database already seeded ($ADMIN_COUNT admin(s))"
           fi
