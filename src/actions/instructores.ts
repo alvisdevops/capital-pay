@@ -2,9 +2,29 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth-guard";
-import { createInstructorSchema, instructorSchema } from "@/lib/validators/instructor";
+import { createInstructorSchema, instructorSchema, type TarifasInput } from "@/lib/validators/instructor";
+import { CATEGORIAS, type CategoriaKey } from "@/lib/constants";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import type { Categoria } from "@prisma/client";
+
+async function syncTarifas(instructorId: string, tarifas: TarifasInput | undefined) {
+  if (!tarifas) return;
+  for (const categoria of CATEGORIAS) {
+    const valor = tarifas[categoria as CategoriaKey];
+    if (valor && valor > 0) {
+      await prisma.tarifaInstructor.upsert({
+        where: { instructorId_categoria: { instructorId, categoria: categoria as Categoria } },
+        create: { instructorId, categoria: categoria as Categoria, valorHora: valor },
+        update: { valorHora: valor },
+      });
+    } else {
+      await prisma.tarifaInstructor.deleteMany({
+        where: { instructorId, categoria: categoria as Categoria },
+      });
+    }
+  }
+}
 
 export async function crearInstructor(data: unknown) {
   await requireRole("ADMIN");
@@ -14,7 +34,7 @@ export async function crearInstructor(data: unknown) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const { password, ...rest } = parsed.data;
+  const { password, tarifas, ...rest } = parsed.data;
 
   const existing = await prisma.user.findFirst({
     where: {
@@ -32,7 +52,7 @@ export async function crearInstructor(data: unknown) {
 
   const hashedPassword = await hash(password, 12);
 
-  await prisma.user.create({
+  const instructor = await prisma.user.create({
     data: {
       ...rest,
       tipoCuenta: rest.tipoCuenta || null,
@@ -40,6 +60,8 @@ export async function crearInstructor(data: unknown) {
       role: "INSTRUCTOR",
     },
   });
+
+  await syncTarifas(instructor.id, tarifas);
 
   revalidatePath("/admin/instructores");
   return { success: true };
@@ -59,9 +81,8 @@ export async function actualizarInstructor(instructorId: string, data: unknown) 
 
   if (!instructor) return { error: "Instructor no encontrado" };
 
-  const { password, ...rest } = parsed.data;
+  const { password, tarifas, ...rest } = parsed.data;
 
-  // Check uniqueness excluding current user
   const existing = await prisma.user.findFirst({
     where: {
       OR: [{ email: rest.email }, { cedula: rest.cedula }],
@@ -90,6 +111,8 @@ export async function actualizarInstructor(instructorId: string, data: unknown) 
     where: { id: instructorId },
     data: updateData,
   });
+
+  await syncTarifas(instructorId, tarifas);
 
   revalidatePath("/admin/instructores");
   revalidatePath(`/admin/instructores/${instructorId}`);

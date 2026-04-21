@@ -14,6 +14,7 @@ export default async function EditarInstructorPage({ params }: Props) {
 
   const instructor = await prisma.user.findUnique({
     where: { id, role: "INSTRUCTOR" },
+    include: { tarifas: true },
   });
 
   if (!instructor) notFound();
@@ -22,6 +23,11 @@ export default async function EditarInstructorPage({ params }: Props) {
     where: { activa: true },
     orderBy: { nombre: "asc" },
   });
+
+  const tarifasMap: Partial<Record<"A2" | "B1" | "C1" | "C2", number>> = {};
+  for (const t of instructor.tarifas) {
+    tarifasMap[t.categoria] = Number(t.valorHora);
+  }
 
   return (
     <div className="space-y-6">
@@ -39,6 +45,7 @@ export default async function EditarInstructorPage({ params }: Props) {
             direccion: instructor.direccion,
             ciudadExpedicion: instructor.ciudadExpedicion,
             sedeId: instructor.sedeId,
+            tarifas: tarifasMap,
           }}
         />
       </div>

@@ -14,11 +14,14 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { crearInstructor, actualizarInstructor } from "@/actions/instructores";
+import { CATEGORIAS, CATEGORIAS_LABELS, type CategoriaKey } from "@/lib/constants";
 
 interface Sede {
   id: string;
   nombre: string;
 }
+
+type TarifasMap = Partial<Record<CategoriaKey, number>>;
 
 interface InstructorFormProps {
   sedes: Sede[];
@@ -32,6 +35,7 @@ interface InstructorFormProps {
     direccion: string | null;
     ciudadExpedicion: string | null;
     sedeId: string | null;
+    tarifas?: TarifasMap;
   };
 }
 
@@ -47,6 +51,13 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
+    const tarifas: TarifasMap = {};
+    for (const cat of CATEGORIAS) {
+      const raw = (formData.get(`tarifa_${cat}`) as string) || "";
+      const n = raw ? Number(raw) : NaN;
+      if (Number.isFinite(n) && n > 0) tarifas[cat] = n;
+    }
+
     const data: Record<string, unknown> = {
       email: formData.get("email"),
       nombre: formData.get("nombre"),
@@ -56,6 +67,7 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
       direccion: (formData.get("direccion") as string) || undefined,
       ciudadExpedicion: (formData.get("ciudadExpedicion") as string) || undefined,
       sedeId: formData.get("sedeId"),
+      tarifas,
     };
 
     const password = formData.get("password") as string;
@@ -146,6 +158,33 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="pt-2">
+            <div className="mb-2">
+              <Label>Tarifas por categoría (valor hora)</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Dejar vacío si el instructor no dicta esa categoría.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {CATEGORIAS.map((cat) => (
+                <div key={cat} className="space-y-1">
+                  <Label htmlFor={`tarifa_${cat}`} className="text-sm">
+                    {CATEGORIAS_LABELS[cat]}
+                  </Label>
+                  <Input
+                    id={`tarifa_${cat}`}
+                    name={`tarifa_${cat}`}
+                    type="number"
+                    min={0}
+                    step={100}
+                    placeholder="0"
+                    defaultValue={defaultValues?.tarifas?.[cat] ?? ""}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex gap-3 pt-4">
