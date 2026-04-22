@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -64,7 +65,14 @@ export function Sidebar({ items, userName, userRole, userPhoto }: SidebarProps) 
           <div className="mb-3 flex items-center gap-3 px-3">
             <div className="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center">
               {userPhoto ? (
-                <img src={userPhoto} alt={userName} className="h-full w-full object-cover" />
+                <Image
+                  src={userPhoto}
+                  alt={userName}
+                  width={40}
+                  height={40}
+                  unoptimized
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <span className="text-sm font-semibold text-muted-foreground">
                   {userName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}

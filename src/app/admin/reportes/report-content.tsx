@@ -31,17 +31,25 @@ export function ReportContent() {
   const [loading, setLoading] = useState(true);
 
   async function fetchData(filtros?: { desde?: string; hasta?: string }) {
-    setLoading(true);
     const result = await obtenerResumenGeneral(filtros);
     setData(result);
     setLoading(false);
   }
 
   useEffect(() => {
-    fetchData();
+    let cancelled = false;
+    obtenerResumenGeneral().then((result) => {
+      if (cancelled) return;
+      setData(result);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function handleFilter() {
+    setLoading(true);
     fetchData({
       desde: desde || undefined,
       hasta: hasta || undefined,
@@ -51,6 +59,7 @@ export function ReportContent() {
   function handleClear() {
     setDesde("");
     setHasta("");
+    setLoading(true);
     fetchData();
   }
 

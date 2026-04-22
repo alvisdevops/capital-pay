@@ -21,7 +21,7 @@ async function main() {
     },
   });
 
-  const sedeChapinero = await prisma.sede.upsert({
+  await prisma.sede.upsert({
     where: { id: "sede-chapinero" },
     update: {},
     create: {

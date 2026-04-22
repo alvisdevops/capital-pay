@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
@@ -9,20 +9,18 @@ export function SearchInput({ basePath }: { basePath: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get("q") || "");
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
+  function handleChange(v: string) {
+    setValue(v);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set("q", value);
-      } else {
-        params.delete("q");
-      }
+      if (v) params.set("q", v);
+      else params.delete("q");
       router.push(`${basePath}?${params.toString()}`);
     }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [value]);
+  }
 
   return (
     <div className="flex-1">
@@ -31,7 +29,7 @@ export function SearchInput({ basePath }: { basePath: string }) {
         <Input
           placeholder="Buscar por nombre..."
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           className="pl-9"
         />
       </div>

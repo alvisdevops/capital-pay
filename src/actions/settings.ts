@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guard";
 import { hash, compare } from "bcryptjs";
-import { revalidatePath } from "next/cache";
 
 export async function cambiarPassword(data: {
   passwordActual: string;

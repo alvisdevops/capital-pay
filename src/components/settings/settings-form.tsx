@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,7 +109,14 @@ export function SettingsForm({ userName, currentPhoto }: SettingsFormProps) {
               disabled={uploadLoading}
             >
               {preview ? (
-                <img src={preview} alt={userName} className="h-full w-full object-cover" />
+                <Image
+                  src={preview}
+                  alt={userName}
+                  width={80}
+                  height={80}
+                  unoptimized
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <span className="text-2xl font-semibold text-muted-foreground">{initials}</span>
               )}
