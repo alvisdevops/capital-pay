@@ -43,13 +43,13 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const enriched = cuentas.map((c) => {
-    const categorias = Array.from(new Set(c.items.map((i) => i.categoria)));
+    const categorias = Array.from(new Set(c.items.map((i) => i.categoria))).sort();
     const totalHoras = c.items.reduce((s, i) => s + i.horas, 0);
     const totalBorrador = c.items.reduce((s, i) => s + Number(i.subtotal), 0);
     const resumen =
-      c.estado === "BORRADOR"
-        ? `${totalHoras}h · ${categorias.length > 0 ? categoriasToTexto(categorias) : "sin filas"}`
-        : c.concepto;
+      categorias.length > 0
+        ? `${totalHoras}h · ${categoriasToTexto(categorias)}`
+        : "Sin filas";
     const valor = c.estado === "BORRADOR" ? totalBorrador : Number(c.valor);
     return { ...c, resumen, valorNumero: valor };
   });

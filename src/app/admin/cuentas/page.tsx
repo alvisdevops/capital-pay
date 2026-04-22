@@ -6,7 +6,7 @@ import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
 import { StatusChangeDialog } from "@/components/cuentas/status-change-dialog";
 import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
 import { SearchInput } from "@/components/cuentas/search-input";
-import { formatCurrency, formatDateShort } from "@/lib/utils";
+import { formatCurrency, formatDateShort, categoriasToTexto } from "@/lib/utils";
 import { type EstadoCuenta } from "@prisma/client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
       include: {
         instructor: { select: { nombre: true, apellido: true } },
         sede: { select: { nombre: true } },
+        items: { select: { categoria: true, horas: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
@@ -69,6 +70,15 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
     }),
     prisma.cuentaCobro.count({ where }),
   ]);
+
+  const enriched = cuentas.map((c) => {
+    const categorias = Array.from(new Set(c.items.map((i) => i.categoria))).sort();
+    const horas = c.items.reduce((s, i) => s + i.horas, 0);
+    const resumen = categorias.length > 0
+      ? `${horas}h · ${categoriasToTexto(categorias)}`
+      : "—";
+    return { ...c, resumen };
+  });
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const estados = ["TODOS", "PENDIENTE", "APROBADA", "RECHAZADA", "PAGADA"];
@@ -120,7 +130,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
         <>
           {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-border rounded-lg border bg-card">
-            {cuentas.map((cuenta) => (
+            {enriched.map((cuenta) => (
               <Link key={cuenta.id} href={`/admin/cuentas/${cuenta.id}`} className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -128,7 +138,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
                     <CuentaStatusBadge estado={cuenta.estado} />
                   </div>
                   <p className="font-medium truncate">{cuenta.instructor.nombre} {cuenta.instructor.apellido}</p>
-                  <p className="text-sm text-muted-foreground truncate">{cuenta.concepto}</p>
+                  <p className="text-sm text-muted-foreground truncate">{cuenta.resumen}</p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-muted-foreground">{cuenta.sede.nombre}</span>
                     <span className="font-medium">{formatCurrency(Number(cuenta.valor))}</span>
@@ -145,7 +155,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
                 <TableRow>
                   <TableHead>No.</TableHead>
                   <TableHead>Instructor</TableHead>
-                  <TableHead>Concepto</TableHead>
+                  <TableHead>Resumen</TableHead>
                   <TableHead className="hidden lg:table-cell">Sede</TableHead>
                   <TableHead className="hidden lg:table-cell">Periodo</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
@@ -154,7 +164,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cuentas.map((cuenta) => (
+                {enriched.map((cuenta) => (
                   <TableRow key={cuenta.id}>
                     <TableCell className="font-medium">
                       {String(cuenta.numero).padStart(5, "0")}
@@ -162,8 +172,8 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
                     <TableCell>
                       {cuenta.instructor.nombre} {cuenta.instructor.apellido}
                     </TableCell>
-                    <TableCell className="max-w-[150px] truncate">
-                      {cuenta.concepto}
+                    <TableCell className="max-w-[200px] truncate">
+                      {cuenta.resumen}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">{cuenta.sede.nombre}</TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">

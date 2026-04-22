@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guard";
 import { cuentaBorradorSchema, cambiarEstadoSchema } from "@/lib/validators/cuenta";
 import { TRANSICIONES_VALIDAS } from "@/lib/constants";
-import { conceptoDesdeCategorias } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 import type { Categoria, EstadoCuenta } from "@prisma/client";
 
@@ -59,7 +58,6 @@ export async function guardarBorrador(data: unknown, cuentaId?: string) {
     data: {
       instructorId: session.user.id,
       sedeId,
-      concepto: "",
       descripcion: descripcion || null,
       valor: 0,
       periodoInicio: hoy,
@@ -130,8 +128,6 @@ export async function enviarCuenta(cuentaId: string) {
   const fechas = cuenta.items.map((i) => i.fecha.getTime());
   const periodoInicio = new Date(Math.min(...fechas));
   const periodoFin = new Date(Math.max(...fechas));
-  const categorias = Array.from(new Set(cuenta.items.map((i) => i.categoria)));
-  const concepto = conceptoDesdeCategorias(categorias);
 
   await prisma.$transaction([
     ...updates,
@@ -140,7 +136,6 @@ export async function enviarCuenta(cuentaId: string) {
       data: {
         estado: "PENDIENTE",
         valor: total,
-        concepto,
         periodoInicio,
         periodoFin,
       },

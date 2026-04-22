@@ -80,7 +80,6 @@ model CuentaCobro {
   instructorId   String
   sede           Sede         @relation(fields: [sedeId], references: [id])
   sedeId         String
-  concepto       String
   descripcion    String?
   valor          Decimal      @db.Decimal(12, 2)
   periodoInicio  DateTime

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
 import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
-import { formatCurrency, formatDate, formatDateShort } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateShort, conceptoDesdeCategorias } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -53,6 +53,8 @@ export default async function CuentaDetailPage({ params }: Props) {
   const isRechazada = cuenta.estado === "RECHAZADA";
   const totalHoras = cuenta.items.reduce((s, i) => s + i.horas, 0);
   const totalValor = cuenta.items.reduce((s, i) => s + Number(i.subtotal), 0);
+  const categorias = Array.from(new Set(cuenta.items.map((i) => i.categoria))).sort();
+  const concepto = conceptoDesdeCategorias(categorias);
 
   return (
     <div className="space-y-6">
@@ -102,10 +104,10 @@ export default async function CuentaDetailPage({ params }: Props) {
               <span className="text-sm text-muted-foreground">Sede</span>
               <span className="text-sm font-medium">{cuenta.sede.nombre}</span>
             </div>
-            {!isBorrador && cuenta.concepto && (
+            {!isBorrador && cuenta.items.length > 0 && (
               <div>
                 <span className="text-sm text-muted-foreground">Concepto</span>
-                <p className="mt-1 text-sm">{cuenta.concepto}</p>
+                <p className="mt-1 text-sm">{concepto}</p>
               </div>
             )}
             {cuenta.descripcion && (

@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
 import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
 import { StatusChangeDialog } from "@/components/cuentas/status-change-dialog";
-import { formatCurrency, formatDate, formatDateShort } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateShort, conceptoDesdeCategorias } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -46,6 +46,8 @@ export default async function AdminCuentaDetailPage({ params }: Props) {
   if (cuenta.estado === "BORRADOR") notFound();
 
   const totalHoras = cuenta.items.reduce((s, i) => s + i.horas, 0);
+  const categorias = Array.from(new Set(cuenta.items.map((i) => i.categoria))).sort();
+  const concepto = conceptoDesdeCategorias(categorias);
 
   return (
     <div className="space-y-6">
@@ -81,10 +83,10 @@ export default async function AdminCuentaDetailPage({ params }: Props) {
               <span className="text-sm text-muted-foreground">Sede</span>
               <span className="text-sm font-medium">{cuenta.sede.nombre}</span>
             </div>
-            {cuenta.concepto && (
+            {cuenta.items.length > 0 && (
               <div>
                 <span className="text-sm text-muted-foreground">Concepto</span>
-                <p className="mt-1 text-sm">{cuenta.concepto}</p>
+                <p className="mt-1 text-sm">{concepto}</p>
               </div>
             )}
             <div className="flex justify-between">
