@@ -29,7 +29,7 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
 
   const where = { instructorId: session.user.id };
 
-  const [cuentas, total] = await Promise.all([
+  const [cuentas, total, tarifas] = await Promise.all([
     prisma.cuentaCobro.findMany({
       where,
       include: { sede: true, items: { select: { categoria: true, horas: true, subtotal: true } } },
@@ -38,18 +38,23 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
       take: PAGE_SIZE,
     }),
     prisma.cuentaCobro.count({ where }),
+    prisma.tarifaInstructor.findMany({ where: { instructorId: session.user.id } }),
   ]);
 
+  const tarifaMap = new Map(tarifas.map((t) => [t.categoria, Number(t.valorHora)]));
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const enriched = cuentas.map((c) => {
     const categorias = Array.from(new Set(c.items.map((i) => i.categoria))).sort();
     const totalHoras = c.items.reduce((s, i) => s + i.horas, 0);
-    const totalBorrador = c.items.reduce((s, i) => s + Number(i.subtotal), 0);
     const resumen =
       categorias.length > 0
         ? `${totalHoras}h · ${categoriasToTexto(categorias)}`
         : "Sin filas";
+    const totalBorrador = c.items.reduce(
+      (s, i) => s + i.horas * (tarifaMap.get(i.categoria) ?? 0),
+      0,
+    );
     const valor = c.estado === "BORRADOR" ? totalBorrador : Number(c.valor);
     return { ...c, resumen, valorNumero: valor };
   });

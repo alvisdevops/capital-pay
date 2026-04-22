@@ -51,8 +51,28 @@ export default async function CuentaDetailPage({ params }: Props) {
 
   const isBorrador = cuenta.estado === "BORRADOR";
   const isRechazada = cuenta.estado === "RECHAZADA";
+
+  const tarifas = isBorrador
+    ? await prisma.tarifaInstructor.findMany({
+        where: { instructorId: session.user.id },
+      })
+    : [];
+  const tarifaMap = new Map(tarifas.map((t) => [t.categoria, Number(t.valorHora)]));
+
+  const itemsView = cuenta.items.map((it) => {
+    const valorHoraReal = Number(it.valorHora);
+    const subtotalReal = Number(it.subtotal);
+    const valorHoraVista = isBorrador && valorHoraReal === 0
+      ? tarifaMap.get(it.categoria) ?? 0
+      : valorHoraReal;
+    const subtotalVista = isBorrador && subtotalReal === 0
+      ? valorHoraVista * it.horas
+      : subtotalReal;
+    return { ...it, valorHoraVista, subtotalVista };
+  });
+
   const totalHoras = cuenta.items.reduce((s, i) => s + i.horas, 0);
-  const totalValor = cuenta.items.reduce((s, i) => s + Number(i.subtotal), 0);
+  const totalValor = itemsView.reduce((s, i) => s + i.subtotalVista, 0);
   const categorias = Array.from(new Set(cuenta.items.map((i) => i.categoria))).sort();
   const concepto = conceptoDesdeCategorias(categorias);
 
@@ -198,19 +218,19 @@ export default async function CuentaDetailPage({ params }: Props) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cuenta.items.map((item) => (
+                {itemsView.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{formatDateShort(item.fecha)}</TableCell>
                     <TableCell>{item.categoria}</TableCell>
                     <TableCell className="text-right">{item.horas}</TableCell>
                     <TableCell className="text-right">
-                      {Number(item.valorHora) > 0
-                        ? formatCurrency(Number(item.valorHora))
+                      {item.valorHoraVista > 0
+                        ? formatCurrency(item.valorHoraVista)
                         : "—"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {Number(item.subtotal) > 0
-                        ? formatCurrency(Number(item.subtotal))
+                      {item.subtotalVista > 0
+                        ? formatCurrency(item.subtotalVista)
                         : "—"}
                     </TableCell>
                   </TableRow>
