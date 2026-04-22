@@ -9,6 +9,7 @@ import { formatCurrency, formatDate, formatDateShort } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { HistorialEstadoList } from "@/components/cuentas/historial-estado";
 import {
   Table,
   TableBody,
@@ -32,6 +33,12 @@ export default async function AdminCuentaDetailPage({ params }: Props) {
       sede: true,
       instructor: true,
       items: { orderBy: { fecha: "asc" } },
+      historial: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          cambiadoPor: { select: { nombre: true, apellido: true, role: true } },
+        },
+      },
     },
   });
 
@@ -168,6 +175,17 @@ export default async function AdminCuentaDetailPage({ params }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {cuenta.historial.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Historial</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <HistorialEstadoList historial={cuenta.historial} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

@@ -53,6 +53,7 @@ model User {
   sedeId           String?
   cuentasCobro     CuentaCobro[]
   tarifas          TarifaInstructor[]
+  historialCambios HistorialEstado[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
@@ -88,6 +89,7 @@ model CuentaCobro {
   observaciones  String?
   fechaPago      DateTime?
   items          CuentaItem[]
+  historial      HistorialEstado[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -120,4 +122,19 @@ model CuentaItem {
 
   @@index([cuentaId])
   @@map("cuenta_items")
+}
+
+model HistorialEstado {
+  id             String       @id @default(cuid())
+  cuenta         CuentaCobro  @relation(fields: [cuentaId], references: [id], onDelete: Cascade)
+  cuentaId       String
+  estadoAnterior EstadoCuenta
+  estadoNuevo    EstadoCuenta
+  observacion    String?
+  cambiadoPor    User         @relation(fields: [cambiadoPorId], references: [id])
+  cambiadoPorId  String
+  createdAt      DateTime     @default(now())
+
+  @@index([cuentaId])
+  @@map("historial_estados")
 }

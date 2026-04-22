@@ -11,6 +11,8 @@ import Link from "next/link";
 import { Download, Pencil } from "lucide-react";
 import { DeleteCuentaButton } from "./delete-button";
 import { EnviarCuentaButton } from "./enviar-button";
+import { ReabrirCuentaButton } from "./reabrir-button";
+import { HistorialEstadoList } from "@/components/cuentas/historial-estado";
 import {
   Table,
   TableBody,
@@ -34,6 +36,12 @@ export default async function CuentaDetailPage({ params }: Props) {
       sede: true,
       instructor: true,
       items: { orderBy: { fecha: "asc" } },
+      historial: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          cambiadoPor: { select: { nombre: true, apellido: true, role: true } },
+        },
+      },
     },
   });
 
@@ -42,6 +50,7 @@ export default async function CuentaDetailPage({ params }: Props) {
   }
 
   const isBorrador = cuenta.estado === "BORRADOR";
+  const isRechazada = cuenta.estado === "RECHAZADA";
   const totalHoras = cuenta.items.reduce((s, i) => s + i.horas, 0);
   const totalValor = cuenta.items.reduce((s, i) => s + Number(i.subtotal), 0);
 
@@ -74,6 +83,7 @@ export default async function CuentaDetailPage({ params }: Props) {
                 <DeleteCuentaButton cuentaId={cuenta.id} />
               </>
             )}
+            {isRechazada && <ReabrirCuentaButton cuentaId={cuenta.id} />}
           </div>
         }
       />
@@ -153,6 +163,17 @@ export default async function CuentaDetailPage({ params }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {cuenta.historial.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Historial</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <HistorialEstadoList historial={cuenta.historial} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

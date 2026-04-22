@@ -6,7 +6,7 @@ import { cuentaBorradorSchema, cambiarEstadoSchema } from "@/lib/validators/cuen
 import { TRANSICIONES_VALIDAS } from "@/lib/constants";
 import { conceptoDesdeCategorias } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
-import type { Categoria } from "@prisma/client";
+import type { Categoria, EstadoCuenta } from "@prisma/client";
 
 export async function guardarBorrador(data: unknown, cuentaId?: string) {
   const session = await requireAuth();
@@ -145,6 +145,14 @@ export async function enviarCuenta(cuentaId: string) {
         periodoFin,
       },
     }),
+    prisma.historialEstado.create({
+      data: {
+        cuentaId,
+        estadoAnterior: "BORRADOR",
+        estadoNuevo: "PENDIENTE",
+        cambiadoPorId: session.user.id,
+      },
+    }),
   ]);
 
   revalidatePath("/instructor/cuentas");
@@ -152,6 +160,39 @@ export async function enviarCuenta(cuentaId: string) {
   revalidatePath("/admin/cuentas");
   revalidatePath("/instructor/dashboard");
   return { success: true };
+}
+
+export async function reabrirCuenta(cuentaId: string) {
+  const session = await requireAuth();
+  if (session.user.role !== "INSTRUCTOR") {
+    return { error: "No autorizado" };
+  }
+
+  const cuenta = await prisma.cuentaCobro.findUnique({ where: { id: cuentaId } });
+  if (!cuenta) return { error: "Cuenta no encontrada" };
+  if (cuenta.instructorId !== session.user.id) return { error: "No autorizado" };
+  if (cuenta.estado !== "RECHAZADA") {
+    return { error: "Solo se pueden reabrir cuentas rechazadas" };
+  }
+
+  await prisma.$transaction([
+    prisma.cuentaCobro.update({
+      where: { id: cuentaId },
+      data: { estado: "BORRADOR" },
+    }),
+    prisma.historialEstado.create({
+      data: {
+        cuentaId,
+        estadoAnterior: "RECHAZADA",
+        estadoNuevo: "BORRADOR",
+        cambiadoPorId: session.user.id,
+      },
+    }),
+  ]);
+
+  revalidatePath("/instructor/cuentas");
+  revalidatePath(`/instructor/cuentas/${cuentaId}`);
+  return { success: true, cuentaId };
 }
 
 export async function eliminarCuenta(cuentaId: string) {
@@ -198,16 +239,30 @@ export async function cambiarEstadoCuenta(data: unknown) {
     return { error: `No se puede cambiar de ${cuenta.estado} a ${nuevoEstado}` };
   }
 
-  await prisma.cuentaCobro.update({
-    where: { id: cuentaId },
-    data: {
-      estado: nuevoEstado,
-      observaciones: observaciones || null,
-      fechaPago: nuevoEstado === "PAGADA" ? new Date() : null,
-    },
-  });
+  const estadoAnterior = cuenta.estado;
+
+  await prisma.$transaction([
+    prisma.cuentaCobro.update({
+      where: { id: cuentaId },
+      data: {
+        estado: nuevoEstado,
+        observaciones: observaciones || null,
+        fechaPago: nuevoEstado === "PAGADA" ? new Date() : null,
+      },
+    }),
+    prisma.historialEstado.create({
+      data: {
+        cuentaId,
+        estadoAnterior,
+        estadoNuevo: nuevoEstado as EstadoCuenta,
+        observacion: observaciones || null,
+        cambiadoPorId: session.user.id,
+      },
+    }),
+  ]);
 
   revalidatePath("/admin/cuentas");
   revalidatePath(`/admin/cuentas/${cuentaId}`);
+  revalidatePath(`/instructor/cuentas/${cuentaId}`);
   return { success: true };
 }
