@@ -26,6 +26,11 @@ export async function completarSetup(data: {
     return { error: "Todos los datos bancarios son requeridos" };
   }
 
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+  if (!user) {
+    return { error: "Sesión inválida. Cierra sesión e inicia de nuevo." };
+  }
+
   const hashedPassword = await hash(data.passwordNueva, 12);
 
   await prisma.user.update({
