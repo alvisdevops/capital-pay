@@ -100,64 +100,76 @@ export function InstructorForm({ sedes, defaultValues }: InstructorFormProps) {
             <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre</Label>
-              <Input id="nombre" name="nombre" defaultValue={defaultValues?.nombre} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="apellido">Apellido</Label>
-              <Input id="apellido" name="apellido" defaultValue={defaultValues?.apellido} required />
+          <div>
+            <h3 className="text-sm font-medium mb-3">Datos obligatorios</h3>
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="nombre">Nombre <span className="text-destructive">*</span></Label>
+                  <Input id="nombre" name="nombre" defaultValue={defaultValues?.nombre} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="apellido">Apellido <span className="text-destructive">*</span></Label>
+                  <Input id="apellido" name="apellido" defaultValue={defaultValues?.apellido} required />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="cedula">Cedula <span className="text-destructive">*</span></Label>
+                  <Input id="cedula" name="cedula" defaultValue={defaultValues?.cedula} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email <span className="text-destructive">*</span></Label>
+                  <Input id="email" name="email" type="email" defaultValue={defaultValues?.email} required />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="password">
+                    {isEditing ? "Nueva contrasena (opcional)" : <>Contrasena temporal <span className="text-destructive">*</span></>}
+                  </Label>
+                  <Input id="password" name="password" type="password" required={!isEditing} minLength={8} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sedeId">Sede <span className="text-destructive">*</span></Label>
+                  <Select name="sedeId" defaultValue={defaultValues?.sedeId || undefined}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecciona una sede" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sedes.map((sede) => (
+                        <SelectItem key={sede.id} value={sede.id}>{sede.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="cedula">Cedula</Label>
-              <Input id="cedula" name="cedula" defaultValue={defaultValues?.cedula} required />
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-medium">Datos opcionales</h3>
+            <p className="text-xs text-muted-foreground mt-1 mb-3">
+              Si los dejas vacíos, el instructor los completará en su primer ingreso.
+            </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="ciudadExpedicion">Ciudad de expedición de la cédula</Label>
+                <Input id="ciudadExpedicion" name="ciudadExpedicion" defaultValue={defaultValues?.ciudadExpedicion || ""} />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="telefono">Teléfono</Label>
+                  <Input id="telefono" name="telefono" defaultValue={defaultValues?.telefono || ""} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="direccion">Dirección</Label>
+                  <Input id="direccion" name="direccion" defaultValue={defaultValues?.direccion || ""} />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="ciudadExpedicion">Ciudad expedicion</Label>
-              <Input id="ciudadExpedicion" name="ciudadExpedicion" defaultValue={defaultValues?.ciudadExpedicion || ""} />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" defaultValue={defaultValues?.email} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                {isEditing ? "Nueva contrasena (dejar vacio para no cambiar)" : "Contrasena temporal"}
-              </Label>
-              <Input id="password" name="password" type="password" required={!isEditing} minLength={8} />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="telefono">Telefono</Label>
-              <Input id="telefono" name="telefono" defaultValue={defaultValues?.telefono || ""} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="direccion">Direccion</Label>
-              <Input id="direccion" name="direccion" defaultValue={defaultValues?.direccion || ""} />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="sedeId">Sede</Label>
-            <Select name="sedeId" defaultValue={defaultValues?.sedeId || undefined}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona una sede" />
-              </SelectTrigger>
-              <SelectContent>
-                {sedes.map((sede) => (
-                  <SelectItem key={sede.id} value={sede.id}>{sede.nombre}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="pt-2">

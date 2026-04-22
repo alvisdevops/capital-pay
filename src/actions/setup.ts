@@ -8,6 +8,9 @@ import { revalidatePath } from "next/cache";
 export async function completarSetup(data: {
   passwordNueva: string;
   confirmarPassword: string;
+  telefono?: string;
+  direccion: string;
+  ciudadExpedicion: string;
   banco: string;
   tipoCuenta: string;
   numeroCuenta: string;
@@ -20,6 +23,10 @@ export async function completarSetup(data: {
 
   if (data.passwordNueva !== data.confirmarPassword) {
     return { error: "Las contraseñas no coinciden" };
+  }
+
+  if (!data.ciudadExpedicion?.trim() || !data.direccion?.trim()) {
+    return { error: "Ciudad de expedición y dirección son requeridas" };
   }
 
   if (!data.banco || !data.tipoCuenta || !data.numeroCuenta) {
@@ -37,6 +44,9 @@ export async function completarSetup(data: {
     where: { id: session.user.id },
     data: {
       password: hashedPassword,
+      telefono: data.telefono?.trim() || null,
+      direccion: data.direccion.trim(),
+      ciudadExpedicion: data.ciudadExpedicion.trim(),
       banco: data.banco,
       tipoCuenta: data.tipoCuenta as "AHORROS" | "CORRIENTE",
       numeroCuenta: data.numeroCuenta,
