@@ -37,7 +37,7 @@ export default async function AdminCuentasPage({ searchParams }: Props) {
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page || "1"));
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { estado: { not: "BORRADOR" } };
   if (params.estado && params.estado !== "TODOS") {
     where.estado = params.estado as EstadoCuenta;
   }

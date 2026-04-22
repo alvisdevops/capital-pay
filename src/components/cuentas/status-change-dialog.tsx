@@ -31,7 +31,9 @@ export function StatusChangeDialog({ cuentaId, estadoActual }: StatusChangeDialo
   const [selectedEstado, setSelectedEstado] = useState<string>("");
   const [observaciones, setObservaciones] = useState("");
 
-  const transiciones = TRANSICIONES_VALIDAS[estadoActual] || [];
+  const transiciones = (TRANSICIONES_VALIDAS[estadoActual] || []).filter(
+    (e) => e !== "BORRADOR",
+  );
 
   if (transiciones.length === 0) return null;
 

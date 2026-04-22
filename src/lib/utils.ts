@@ -32,3 +32,17 @@ export function formatDateShort(date: Date | string): string {
     day: "2-digit",
   }).format(d);
 }
+
+export function categoriasToTexto(categorias: string[]): string {
+  const unique = Array.from(new Set(categorias));
+  if (unique.length === 0) return "";
+  if (unique.length === 1) return unique[0];
+  const init = unique.slice(0, -1).join(" ");
+  return `${init} Y ${unique[unique.length - 1]}`;
+}
+
+export function conceptoDesdeCategorias(categorias: string[]): string {
+  const texto = categoriasToTexto(categorias);
+  if (!texto) return "Clases de conducción";
+  return `Servicios prestados como instructor en técnicas de conducción ${texto}`;
+}

@@ -4,12 +4,21 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
 import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateShort } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Download, Pencil, Trash2 } from "lucide-react";
+import { Download, Pencil } from "lucide-react";
 import { DeleteCuentaButton } from "./delete-button";
+import { EnviarCuentaButton } from "./enviar-button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -21,31 +30,39 @@ export default async function CuentaDetailPage({ params }: Props) {
 
   const cuenta = await prisma.cuentaCobro.findUnique({
     where: { id },
-    include: { sede: true, instructor: true },
+    include: {
+      sede: true,
+      instructor: true,
+      items: { orderBy: { fecha: "asc" } },
+    },
   });
 
   if (!cuenta || cuenta.instructorId !== session.user.id) {
     notFound();
   }
 
-  const isPendiente = cuenta.estado === "PENDIENTE";
+  const isBorrador = cuenta.estado === "BORRADOR";
+  const totalHoras = cuenta.items.reduce((s, i) => s + i.horas, 0);
+  const totalValor = cuenta.items.reduce((s, i) => s + Number(i.subtotal), 0);
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Cuenta de Cobro #${String(cuenta.numero).padStart(5, "0")}`}
+        title={`${isBorrador ? "Borrador" : "Cuenta de Cobro"} #${String(cuenta.numero).padStart(5, "0")}`}
         action={
-          <div className="flex gap-2">
-            <PdfPreviewDialog
-              cuentaId={cuenta.id}
-              cuentaNumero={String(cuenta.numero).padStart(5, "0")}
-            >
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Ver PDF
-              </Button>
-            </PdfPreviewDialog>
-            {isPendiente && (
+          <div className="flex gap-2 flex-wrap">
+            {!isBorrador && (
+              <PdfPreviewDialog
+                cuentaId={cuenta.id}
+                cuentaNumero={String(cuenta.numero).padStart(5, "0")}
+              >
+                <Button variant="outline">
+                  <Download className="mr-2 h-4 w-4" />
+                  Ver PDF
+                </Button>
+              </PdfPreviewDialog>
+            )}
+            {isBorrador && (
               <>
                 <Link href={`/instructor/cuentas/${cuenta.id}/editar`}>
                   <Button variant="outline">
@@ -53,6 +70,7 @@ export default async function CuentaDetailPage({ params }: Props) {
                     Editar
                   </Button>
                 </Link>
+                <EnviarCuentaButton cuentaId={cuenta.id} />
                 <DeleteCuentaButton cuentaId={cuenta.id} />
               </>
             )}
@@ -74,13 +92,15 @@ export default async function CuentaDetailPage({ params }: Props) {
               <span className="text-sm text-muted-foreground">Sede</span>
               <span className="text-sm font-medium">{cuenta.sede.nombre}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Concepto</span>
-              <span className="text-sm font-medium max-w-[200px] text-right">{cuenta.concepto}</span>
-            </div>
+            {!isBorrador && cuenta.concepto && (
+              <div>
+                <span className="text-sm text-muted-foreground">Concepto</span>
+                <p className="mt-1 text-sm">{cuenta.concepto}</p>
+              </div>
+            )}
             {cuenta.descripcion && (
               <div>
-                <span className="text-sm text-muted-foreground">Descripción</span>
+                <span className="text-sm text-muted-foreground">Notas</span>
                 <p className="mt-1 text-sm">{cuenta.descripcion}</p>
               </div>
             )}
@@ -89,21 +109,29 @@ export default async function CuentaDetailPage({ params }: Props) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Datos de Pago</CardTitle>
+            <CardTitle className="text-lg">Totales</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Valor</span>
-              <span className="text-lg font-bold text-green-700">
-                {formatCurrency(Number(cuenta.valor))}
-              </span>
+              <span className="text-sm text-muted-foreground">Total horas</span>
+              <span className="text-sm font-medium">{totalHoras}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Periodo</span>
-              <span className="text-sm font-medium">
-                {formatDate(cuenta.periodoInicio)} - {formatDate(cuenta.periodoFin)}
+              <span className="text-sm text-muted-foreground">
+                {isBorrador ? "Total estimado" : "Valor"}
+              </span>
+              <span className="text-lg font-bold text-green-700">
+                {formatCurrency(isBorrador ? totalValor : Number(cuenta.valor))}
               </span>
             </div>
+            {!isBorrador && (
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Periodo</span>
+                <span className="text-sm font-medium">
+                  {formatDate(cuenta.periodoInicio)} - {formatDate(cuenta.periodoFin)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Fecha de creación</span>
               <span className="text-sm">{formatDate(cuenta.createdAt)}</span>
@@ -125,6 +153,50 @@ export default async function CuentaDetailPage({ params }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Clases dictadas ({cuenta.items.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {cuenta.items.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Este borrador no tiene filas aún.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead className="text-right">Horas</TableHead>
+                  <TableHead className="text-right">Valor hora</TableHead>
+                  <TableHead className="text-right">Subtotal</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cuenta.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{formatDateShort(item.fecha)}</TableCell>
+                    <TableCell>{item.categoria}</TableCell>
+                    <TableCell className="text-right">{item.horas}</TableCell>
+                    <TableCell className="text-right">
+                      {Number(item.valorHora) > 0
+                        ? formatCurrency(Number(item.valorHora))
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {Number(item.subtotal) > 0
+                        ? formatCurrency(Number(item.subtotal))
+                        : "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

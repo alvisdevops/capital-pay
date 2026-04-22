@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/shared/page-header";
 import { Pagination } from "@/components/shared/pagination";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
-import { formatCurrency, formatDateShort } from "@/lib/utils";
+import { formatCurrency, formatDateShort, categoriasToTexto } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,7 +32,7 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
   const [cuentas, total] = await Promise.all([
     prisma.cuentaCobro.findMany({
       where,
-      include: { sede: true },
+      include: { sede: true, items: { select: { categoria: true, horas: true, subtotal: true } } },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -41,6 +41,18 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const enriched = cuentas.map((c) => {
+    const categorias = Array.from(new Set(c.items.map((i) => i.categoria)));
+    const totalHoras = c.items.reduce((s, i) => s + i.horas, 0);
+    const totalBorrador = c.items.reduce((s, i) => s + Number(i.subtotal), 0);
+    const resumen =
+      c.estado === "BORRADOR"
+        ? `${totalHoras}h · ${categorias.length > 0 ? categoriasToTexto(categorias) : "sin filas"}`
+        : c.concepto;
+    const valor = c.estado === "BORRADOR" ? totalBorrador : Number(c.valor);
+    return { ...c, resumen, valorNumero: valor };
+  });
 
   return (
     <div className="space-y-6">
@@ -54,7 +66,7 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
         }
       />
 
-      {cuentas.length === 0 && page === 1 ? (
+      {enriched.length === 0 && page === 1 ? (
         <div className="rounded-lg border border-dashed p-12 text-center">
           <p className="text-muted-foreground">No tienes cuentas de cobro aún.</p>
           <Link href="/instructor/cuentas/nueva">
@@ -65,17 +77,17 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
         <>
           {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-border rounded-lg border bg-card">
-            {cuentas.map((cuenta) => (
+            {enriched.map((cuenta) => (
               <Link key={cuenta.id} href={`/instructor/cuentas/${cuenta.id}`} className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-muted-foreground">#{String(cuenta.numero).padStart(5, "0")}</span>
                     <CuentaStatusBadge estado={cuenta.estado} />
                   </div>
-                  <p className="font-medium truncate">{cuenta.concepto}</p>
+                  <p className="font-medium truncate">{cuenta.resumen}</p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-muted-foreground">{cuenta.sede.nombre}</span>
-                    <span className="font-medium">{formatCurrency(Number(cuenta.valor))}</span>
+                    <span className="font-medium">{formatCurrency(cuenta.valorNumero)}</span>
                   </div>
                 </div>
               </Link>
@@ -88,7 +100,7 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
             <TableHeader>
               <TableRow>
                 <TableHead>No.</TableHead>
-                <TableHead>Concepto</TableHead>
+                <TableHead>Resumen</TableHead>
                 <TableHead className="hidden lg:table-cell">Sede</TableHead>
                 <TableHead className="hidden lg:table-cell">Periodo</TableHead>
                 <TableHead className="text-right">Valor</TableHead>
@@ -97,21 +109,22 @@ export default async function InstructorCuentasPage({ searchParams }: Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {cuentas.map((cuenta) => (
+              {enriched.map((cuenta) => (
                 <TableRow key={cuenta.id}>
                   <TableCell className="font-medium">
                     {String(cuenta.numero).padStart(5, "0")}
                   </TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {cuenta.concepto}
+                  <TableCell className="max-w-[250px] truncate">
+                    {cuenta.resumen}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">{cuenta.sede.nombre}</TableCell>
                   <TableCell className="hidden lg:table-cell text-sm">
-                    {formatDateShort(cuenta.periodoInicio)} -{" "}
-                    {formatDateShort(cuenta.periodoFin)}
+                    {cuenta.estado === "BORRADOR"
+                      ? "—"
+                      : `${formatDateShort(cuenta.periodoInicio)} - ${formatDateShort(cuenta.periodoFin)}`}
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatCurrency(Number(cuenta.valor))}
+                    {formatCurrency(cuenta.valorNumero)}
                   </TableCell>
                   <TableCell>
                     <CuentaStatusBadge estado={cuenta.estado} />

@@ -5,10 +5,18 @@ import { PageHeader } from "@/components/shared/page-header";
 import { CuentaStatusBadge } from "@/components/cuentas/cuenta-status-badge";
 import { PdfPreviewDialog } from "@/components/cuentas/pdf-preview-dialog";
 import { StatusChangeDialog } from "@/components/cuentas/status-change-dialog";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateShort } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -20,10 +28,17 @@ export default async function AdminCuentaDetailPage({ params }: Props) {
 
   const cuenta = await prisma.cuentaCobro.findUnique({
     where: { id },
-    include: { sede: true, instructor: true },
+    include: {
+      sede: true,
+      instructor: true,
+      items: { orderBy: { fecha: "asc" } },
+    },
   });
 
   if (!cuenta) notFound();
+  if (cuenta.estado === "BORRADOR") notFound();
+
+  const totalHoras = cuenta.items.reduce((s, i) => s + i.horas, 0);
 
   return (
     <div className="space-y-6">
@@ -59,9 +74,15 @@ export default async function AdminCuentaDetailPage({ params }: Props) {
               <span className="text-sm text-muted-foreground">Sede</span>
               <span className="text-sm font-medium">{cuenta.sede.nombre}</span>
             </div>
+            {cuenta.concepto && (
+              <div>
+                <span className="text-sm text-muted-foreground">Concepto</span>
+                <p className="mt-1 text-sm">{cuenta.concepto}</p>
+              </div>
+            )}
             <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Concepto</span>
-              <span className="text-sm font-medium max-w-[200px] text-right">{cuenta.concepto}</span>
+              <span className="text-sm text-muted-foreground">Total horas</span>
+              <span className="text-sm font-medium">{totalHoras}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Valor</span>
@@ -77,7 +98,7 @@ export default async function AdminCuentaDetailPage({ params }: Props) {
             </div>
             {cuenta.descripcion && (
               <div>
-                <span className="text-sm text-muted-foreground">Descripción</span>
+                <span className="text-sm text-muted-foreground">Notas</span>
                 <p className="mt-1 text-sm">{cuenta.descripcion}</p>
               </div>
             )}
@@ -147,6 +168,46 @@ export default async function AdminCuentaDetailPage({ params }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Clases dictadas ({cuenta.items.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {cuenta.items.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Esta cuenta no tiene items registrados.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead className="text-right">Horas</TableHead>
+                  <TableHead className="text-right">Valor hora</TableHead>
+                  <TableHead className="text-right">Subtotal</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cuenta.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{formatDateShort(item.fecha)}</TableCell>
+                    <TableCell>{item.categoria}</TableCell>
+                    <TableCell className="text-right">{item.horas}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(Number(item.valorHora))}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(Number(item.subtotal))}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

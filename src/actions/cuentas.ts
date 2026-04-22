@@ -2,32 +2,78 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-guard";
-import { cuentaCobroSchema, cambiarEstadoSchema } from "@/lib/validators/cuenta";
+import { cuentaBorradorSchema, cambiarEstadoSchema } from "@/lib/validators/cuenta";
 import { TRANSICIONES_VALIDAS } from "@/lib/constants";
+import { conceptoDesdeCategorias } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
+import type { Categoria } from "@prisma/client";
 
-export async function crearCuenta(data: unknown) {
+export async function guardarBorrador(data: unknown, cuentaId?: string) {
   const session = await requireAuth();
   if (session.user.role !== "INSTRUCTOR") {
     return { error: "Solo los instructores pueden crear cuentas de cobro" };
   }
 
-  const parsed = cuentaCobroSchema.safeParse(data);
+  const parsed = cuentaBorradorSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const { sedeId, concepto, descripcion, valor, periodoInicio, periodoFin } = parsed.data;
+  const { sedeId, descripcion, items } = parsed.data;
 
+  if (cuentaId) {
+    const cuenta = await prisma.cuentaCobro.findUnique({ where: { id: cuentaId } });
+    if (!cuenta) return { error: "Cuenta no encontrada" };
+    if (cuenta.instructorId !== session.user.id) return { error: "No autorizado" };
+    if (cuenta.estado !== "BORRADOR") {
+      return { error: "Solo se pueden editar cuentas en borrador" };
+    }
+
+    await prisma.$transaction([
+      prisma.cuentaItem.deleteMany({ where: { cuentaId } }),
+      prisma.cuentaCobro.update({
+        where: { id: cuentaId },
+        data: {
+          sedeId,
+          descripcion: descripcion || null,
+          items: {
+            create: items.map((i) => ({
+              fecha: new Date(i.fecha),
+              horas: i.horas,
+              categoria: i.categoria as Categoria,
+              valorHora: 0,
+              subtotal: 0,
+            })),
+          },
+        },
+      }),
+    ]);
+
+    revalidatePath("/instructor/cuentas");
+    revalidatePath(`/instructor/cuentas/${cuentaId}`);
+    return { success: true, cuentaId };
+  }
+
+  const hoy = new Date();
   const cuenta = await prisma.cuentaCobro.create({
     data: {
       instructorId: session.user.id,
       sedeId,
-      concepto,
+      concepto: "",
       descripcion: descripcion || null,
-      valor,
-      periodoInicio: new Date(periodoInicio),
-      periodoFin: new Date(periodoFin),
+      valor: 0,
+      periodoInicio: hoy,
+      periodoFin: hoy,
+      estado: "BORRADOR",
+      items: {
+        create: items.map((i) => ({
+          fecha: new Date(i.fecha),
+          horas: i.horas,
+          categoria: i.categoria as Categoria,
+          valorHora: 0,
+          subtotal: 0,
+        })),
+      },
     },
   });
 
@@ -36,38 +82,75 @@ export async function crearCuenta(data: unknown) {
   return { success: true, cuentaId: cuenta.id };
 }
 
-export async function actualizarCuenta(cuentaId: string, data: unknown) {
+export async function enviarCuenta(cuentaId: string) {
   const session = await requireAuth();
+  if (session.user.role !== "INSTRUCTOR") {
+    return { error: "No autorizado" };
+  }
 
   const cuenta = await prisma.cuentaCobro.findUnique({
     where: { id: cuentaId },
+    include: { items: true },
   });
 
   if (!cuenta) return { error: "Cuenta no encontrada" };
   if (cuenta.instructorId !== session.user.id) return { error: "No autorizado" };
-  if (cuenta.estado !== "PENDIENTE") return { error: "Solo se pueden editar cuentas pendientes" };
-
-  const parsed = cuentaCobroSchema.safeParse(data);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+  if (cuenta.estado !== "BORRADOR") {
+    return { error: "Solo se pueden enviar cuentas en borrador" };
+  }
+  if (cuenta.items.length === 0) {
+    return { error: "Agrega al menos una fila antes de enviar" };
   }
 
-  const { sedeId, concepto, descripcion, valor, periodoInicio, periodoFin } = parsed.data;
-
-  await prisma.cuentaCobro.update({
-    where: { id: cuentaId },
-    data: {
-      sedeId,
-      concepto,
-      descripcion: descripcion || null,
-      valor,
-      periodoInicio: new Date(periodoInicio),
-      periodoFin: new Date(periodoFin),
-    },
+  const tarifas = await prisma.tarifaInstructor.findMany({
+    where: { instructorId: session.user.id },
   });
+  const tarifaMap = new Map(tarifas.map((t) => [t.categoria, Number(t.valorHora)]));
+
+  const faltantes = cuenta.items
+    .filter((i) => !tarifaMap.has(i.categoria))
+    .map((i) => i.categoria);
+  if (faltantes.length > 0) {
+    return {
+      error: `El admin no te ha asignado tarifa para: ${Array.from(new Set(faltantes)).join(", ")}`,
+    };
+  }
+
+  let total = 0;
+  const updates = cuenta.items.map((item) => {
+    const valorHora = tarifaMap.get(item.categoria)!;
+    const subtotal = valorHora * item.horas;
+    total += subtotal;
+    return prisma.cuentaItem.update({
+      where: { id: item.id },
+      data: { valorHora, subtotal },
+    });
+  });
+
+  const fechas = cuenta.items.map((i) => i.fecha.getTime());
+  const periodoInicio = new Date(Math.min(...fechas));
+  const periodoFin = new Date(Math.max(...fechas));
+  const categorias = Array.from(new Set(cuenta.items.map((i) => i.categoria)));
+  const concepto = conceptoDesdeCategorias(categorias);
+
+  await prisma.$transaction([
+    ...updates,
+    prisma.cuentaCobro.update({
+      where: { id: cuentaId },
+      data: {
+        estado: "PENDIENTE",
+        valor: total,
+        concepto,
+        periodoInicio,
+        periodoFin,
+      },
+    }),
+  ]);
 
   revalidatePath("/instructor/cuentas");
   revalidatePath(`/instructor/cuentas/${cuentaId}`);
+  revalidatePath("/admin/cuentas");
+  revalidatePath("/instructor/dashboard");
   return { success: true };
 }
 
@@ -80,7 +163,9 @@ export async function eliminarCuenta(cuentaId: string) {
 
   if (!cuenta) return { error: "Cuenta no encontrada" };
   if (cuenta.instructorId !== session.user.id) return { error: "No autorizado" };
-  if (cuenta.estado !== "PENDIENTE") return { error: "Solo se pueden eliminar cuentas pendientes" };
+  if (cuenta.estado !== "BORRADOR") {
+    return { error: "Solo se pueden eliminar cuentas en borrador" };
+  }
 
   await prisma.cuentaCobro.delete({ where: { id: cuentaId } });
 
