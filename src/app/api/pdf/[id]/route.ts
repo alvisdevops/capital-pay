@@ -20,6 +20,7 @@ export async function GET(
     include: {
       instructor: true,
       sede: true,
+      items: { orderBy: { fecha: "asc" } },
     },
   });
 
@@ -27,33 +28,38 @@ export async function GET(
     return NextResponse.json({ error: "Cuenta no encontrada" }, { status: 404 });
   }
 
-  // Only owner or admin can access
   if (session.user.role !== "ADMIN" && cuenta.instructorId !== session.user.id) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
+  if (cuenta.estado === "BORRADOR") {
+    return NextResponse.json(
+      { error: "El borrador no puede generar PDF" },
+      { status: 400 },
+    );
+  }
+
   const pdfBuffer = generateCuentaCobroPDF({
     numero: cuenta.numero,
-    concepto: cuenta.concepto,
-    descripcion: cuenta.descripcion,
     valor: Number(cuenta.valor),
     periodoInicio: cuenta.periodoInicio,
     periodoFin: cuenta.periodoFin,
     createdAt: cuenta.createdAt,
+    items: cuenta.items.map((i) => ({
+      fecha: i.fecha,
+      horas: i.horas,
+      categoria: i.categoria,
+      valorHora: Number(i.valorHora),
+      subtotal: Number(i.subtotal),
+    })),
     instructor: {
       nombre: cuenta.instructor.nombre,
       apellido: cuenta.instructor.apellido,
       cedula: cuenta.instructor.cedula,
+      email: cuenta.instructor.email,
       ciudadExpedicion: cuenta.instructor.ciudadExpedicion,
       telefono: cuenta.instructor.telefono,
       direccion: cuenta.instructor.direccion,
-      banco: cuenta.instructor.banco,
-      tipoCuenta: cuenta.instructor.tipoCuenta,
-      numeroCuenta: cuenta.instructor.numeroCuenta,
-    },
-    sede: {
-      nombre: cuenta.sede.nombre,
-      direccion: cuenta.sede.direccion,
     },
   });
 
