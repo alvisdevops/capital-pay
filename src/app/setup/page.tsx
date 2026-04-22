@@ -11,7 +11,11 @@ export default async function SetupPage() {
     select: { setupCompleto: true },
   });
 
-  if (user?.setupCompleto) {
+  if (!user) {
+    redirect("/api/auth/signout?callbackUrl=/login");
+  }
+
+  if (user.setupCompleto) {
     redirect("/instructor/dashboard");
   }
 
