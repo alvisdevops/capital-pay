@@ -61,9 +61,7 @@ jobs:
 
       - name: Deploy with Docker Compose
         run: |
-          echo "🚀 Starting deployment..."
-          docker compose down || true
-
+          # Build ANTES de tumbar nada: si el build falla, la app sigue arriba
           if [ "${{ steps.changes.outputs.rebuild }}" == "true" ]; then
             echo "📦 Full rebuild (dependencies/Dockerfile/schema changed)"
             docker compose build --no-cache app
@@ -73,6 +71,9 @@ jobs:
             docker compose build app
             docker compose --profile tools build migrator
           fi
+
+          echo "🚀 Swapping containers..."
+          docker compose down || true
 
           echo "🚀 Starting database..."
           docker compose up -d db
